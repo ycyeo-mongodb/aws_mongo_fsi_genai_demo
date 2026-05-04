@@ -1,0 +1,1122 @@
+[
+  {
+    "id": "ACC-00001",
+    "customer_id": "CUST-00001",
+    "account_type": "savings",
+    "account_number": "1000-1409-5506-0001",
+    "balance_usd": 8012.16,
+    "currency": "USD",
+    "status": "active",
+    "opened_date": "2008-04-24"
+  },
+  {
+    "id": "ACC-00002",
+    "customer_id": "CUST-00001",
+    "account_type": "current",
+    "account_number": "2000-3286-2679-0002",
+    "balance_usd": 5253.24,
+    "currency": "USD",
+    "status": "active",
+    "opened_date": "2008-06-23"
+  },
+  {
+    "id": "ACC-00003",
+    "customer_id": "CUST-00001",
+    "account_type": "fixed_deposit",
+    "account_number": "3000-1488-2535-0003",
+    "balance_usd": 50000.0,
+    "currency": "USD",
+    "status": "active",
+    "opened_date": "2025-04-19",
+    "interest_rate": 3.4,
+    "maturity_date": "2025-10-16"
+  },
+  {
+    "id": "ACC-00004",
+    "customer_id": "CUST-00002",
+    "account_type": "savings",
+    "account_number": "1000-9279-1434-0004",
+    "balance_usd": 53674.12,
+    "currency": "USD",
+    "status": "active",
+    "opened_date": "2019-08-25"
+  },
+  {
+    "id": "ACC-00005",
+    "customer_id": "CUST-00002",
+    "account_type": "current",
+    "account_number": "2000-9928-7873-0005",
+    "balance_usd": 35870.03,
+    "currency": "USD",
+    "status": "active",
+    "opened_date": "2019-10-24"
+  },
+  {
+    "id": "ACC-00006",
+    "customer_id": "CUST-00003",
+    "account_type": "savings",
+    "account_number": "1000-5557-1106-0006",
+    "balance_usd": 11802.5,
+    "currency": "USD",
+    "status": "active",
+    "opened_date": "2017-12-03"
+  },
+  {
+    "id": "ACC-00007",
+    "customer_id": "CUST-00003",
+    "account_type": "current",
+    "account_number": "2000-3615-7924-0007",
+    "balance_usd": 7994.64,
+    "currency": "USD",
+    "status": "active",
+    "opened_date": "2018-02-01"
+  },
+  {
+    "id": "ACC-00008",
+    "customer_id": "CUST-00004",
+    "account_type": "savings",
+    "account_number": "1000-3547-4527-0008",
+    "balance_usd": 9560.62,
+    "currency": "USD",
+    "status": "active",
+    "opened_date": "2012-07-02"
+  },
+  {
+    "id": "ACC-00009",
+    "customer_id": "CUST-00004",
+    "account_type": "current",
+    "account_number": "2000-6514-2674-0009",
+    "balance_usd": 6507.79,
+    "currency": "USD",
+    "status": "active",
+    "opened_date": "2012-08-31"
+  },
+  {
+    "id": "ACC-00010",
+    "customer_id": "CUST-00005",
+    "account_type": "savings",
+    "account_number": "1000-2584-6881-0010",
+    "balance_usd": 64029.33,
+    "currency": "USD",
+    "status": "active",
+    "opened_date": "2022-02-10"
+  },
+  {
+    "id": "ACC-00011",
+    "customer_id": "CUST-00005",
+    "account_type": "current",
+    "account_number": "2000-5333-1711-0011",
+    "balance_usd": 42864.32,
+    "currency": "USD",
+    "status": "active",
+    "opened_date": "2022-04-11"
+  },
+  {
+    "id": "ACC-00012",
+    "customer_id": "CUST-00005",
+    "account_type": "fixed_deposit",
+    "account_number": "3000-5803-6925-0012",
+    "balance_usd": 25000.0,
+    "currency": "USD",
+    "status": "active",
+    "opened_date": "2025-04-07",
+    "interest_rate": 4.43,
+    "maturity_date": "2025-10-04"
+  },
+  {
+    "id": "ACC-00013",
+    "customer_id": "CUST-00006",
+    "account_type": "savings",
+    "account_number": "1000-2139-1750-0013",
+    "balance_usd": 47763.82,
+    "currency": "USD",
+    "status": "active",
+    "opened_date": "2011-01-09"
+  },
+  {
+    "id": "ACC-00014",
+    "customer_id": "CUST-00006",
+    "account_type": "current",
+    "account_number": "2000-5741-2307-0014",
+    "balance_usd": 31854.17,
+    "currency": "USD",
+    "status": "active",
+    "opened_date": "2011-03-10"
+  },
+  {
+    "id": "ACC-00015",
+    "customer_id": "CUST-00007",
+    "account_type": "savings",
+    "account_number": "1000-2654-7227-0015",
+    "balance_usd": 57835.15,
+    "currency": "USD",
+    "status": "active",
+    "opened_date": "2006-02-04"
+  },
+  {
+    "id": "ACC-00016",
+    "customer_id": "CUST-00007",
+    "account_type": "current",
+    "account_number": "2000-6977-3664-0016",
+    "balance_usd": 38417.61,
+    "currency": "USD",
+    "status": "active",
+    "opened_date": "2006-04-05"
+  },
+  {
+    "id": "ACC-00017",
+    "customer_id": "CUST-00007",
+    "account_type": "fixed_deposit",
+    "account_number": "3000-2169-3803-0017",
+    "balance_usd": 20000.0,
+    "currency": "USD",
+    "status": "active",
+    "opened_date": "2025-06-21",
+    "interest_rate": 4.02,
+    "maturity_date": "2026-06-21"
+  },
+  {
+    "id": "ACC-00018",
+    "customer_id": "CUST-00008",
+    "account_type": "savings",
+    "account_number": "1000-5010-3677-0018",
+    "balance_usd": 37606.23,
+    "currency": "USD",
+    "status": "active",
+    "opened_date": "2010-01-14"
+  },
+  {
+    "id": "ACC-00019",
+    "customer_id": "CUST-00008",
+    "account_type": "current",
+    "account_number": "2000-5422-4598-0019",
+    "balance_usd": 25054.17,
+    "currency": "USD",
+    "status": "active",
+    "opened_date": "2010-03-15"
+  },
+  {
+    "id": "ACC-00020",
+    "customer_id": "CUST-00009",
+    "account_type": "savings",
+    "account_number": "1000-1916-4752-0020",
+    "balance_usd": 27414.98,
+    "currency": "USD",
+    "status": "active",
+    "opened_date": "2015-05-18"
+  },
+  {
+    "id": "ACC-00021",
+    "customer_id": "CUST-00009",
+    "account_type": "current",
+    "account_number": "2000-6168-7572-0021",
+    "balance_usd": 18291.78,
+    "currency": "USD",
+    "status": "active",
+    "opened_date": "2015-07-17"
+  },
+  {
+    "id": "ACC-00022",
+    "customer_id": "CUST-00010",
+    "account_type": "savings",
+    "account_number": "1000-4456-6155-0022",
+    "balance_usd": 28949.21,
+    "currency": "USD",
+    "status": "active",
+    "opened_date": "2022-06-10"
+  },
+  {
+    "id": "ACC-00023",
+    "customer_id": "CUST-00010",
+    "account_type": "current",
+    "account_number": "2000-9179-7482-0023",
+    "balance_usd": 19303.94,
+    "currency": "USD",
+    "status": "active",
+    "opened_date": "2022-08-09"
+  },
+  {
+    "id": "ACC-00024",
+    "customer_id": "CUST-00011",
+    "account_type": "savings",
+    "account_number": "1000-8517-3340-0024",
+    "balance_usd": 32930.84,
+    "currency": "USD",
+    "status": "active",
+    "opened_date": "2017-08-05"
+  },
+  {
+    "id": "ACC-00025",
+    "customer_id": "CUST-00011",
+    "account_type": "current",
+    "account_number": "2000-5040-9830-0025",
+    "balance_usd": 21804.28,
+    "currency": "USD",
+    "status": "active",
+    "opened_date": "2017-10-04"
+  },
+  {
+    "id": "ACC-00026",
+    "customer_id": "CUST-00011",
+    "account_type": "fixed_deposit",
+    "account_number": "3000-6930-4593-0026",
+    "balance_usd": 20000.0,
+    "currency": "USD",
+    "status": "active",
+    "opened_date": "2025-04-20",
+    "interest_rate": 4.92,
+    "maturity_date": "2026-04-20"
+  },
+  {
+    "id": "ACC-00027",
+    "customer_id": "CUST-00012",
+    "account_type": "savings",
+    "account_number": "1000-3266-9348-0027",
+    "balance_usd": 15357.59,
+    "currency": "USD",
+    "status": "active",
+    "opened_date": "2011-01-09"
+  },
+  {
+    "id": "ACC-00028",
+    "customer_id": "CUST-00012",
+    "account_type": "current",
+    "account_number": "2000-1771-2796-0028",
+    "balance_usd": 10104.48,
+    "currency": "USD",
+    "status": "active",
+    "opened_date": "2011-03-10"
+  },
+  {
+    "id": "ACC-00029",
+    "customer_id": "CUST-00013",
+    "account_type": "savings",
+    "account_number": "1000-3621-7916-0029",
+    "balance_usd": 65748.46,
+    "currency": "USD",
+    "status": "active",
+    "opened_date": "2018-09-29"
+  },
+  {
+    "id": "ACC-00030",
+    "customer_id": "CUST-00013",
+    "account_type": "current",
+    "account_number": "2000-7304-7252-0030",
+    "balance_usd": 43944.16,
+    "currency": "USD",
+    "status": "active",
+    "opened_date": "2018-11-28"
+  },
+  {
+    "id": "ACC-00031",
+    "customer_id": "CUST-00013",
+    "account_type": "fixed_deposit",
+    "account_number": "3000-1188-2876-0031",
+    "balance_usd": 50000.0,
+    "currency": "USD",
+    "status": "active",
+    "opened_date": "2025-05-16",
+    "interest_rate": 5.49,
+    "maturity_date": "2026-05-16"
+  },
+  {
+    "id": "ACC-00032",
+    "customer_id": "CUST-00014",
+    "account_type": "savings",
+    "account_number": "1000-9797-5371-0032",
+    "balance_usd": 65543.43,
+    "currency": "USD",
+    "status": "active",
+    "opened_date": "2012-08-31"
+  },
+  {
+    "id": "ACC-00033",
+    "customer_id": "CUST-00014",
+    "account_type": "current",
+    "account_number": "2000-6573-2827-0033",
+    "balance_usd": 43700.88,
+    "currency": "USD",
+    "status": "active",
+    "opened_date": "2012-10-30"
+  },
+  {
+    "id": "ACC-00034",
+    "customer_id": "CUST-00014",
+    "account_type": "fixed_deposit",
+    "account_number": "3000-5315-9201-0034",
+    "balance_usd": 20000.0,
+    "currency": "USD",
+    "status": "active",
+    "opened_date": "2025-04-27",
+    "interest_rate": 4.2,
+    "maturity_date": "2025-10-24"
+  },
+  {
+    "id": "ACC-00035",
+    "customer_id": "CUST-00015",
+    "account_type": "savings",
+    "account_number": "1000-9317-2743-0035",
+    "balance_usd": 5187.52,
+    "currency": "USD",
+    "status": "active",
+    "opened_date": "2019-01-27"
+  },
+  {
+    "id": "ACC-00036",
+    "customer_id": "CUST-00015",
+    "account_type": "current",
+    "account_number": "2000-5889-9317-0036",
+    "balance_usd": 3462.59,
+    "currency": "USD",
+    "status": "active",
+    "opened_date": "2019-03-28"
+  },
+  {
+    "id": "ACC-00037",
+    "customer_id": "CUST-00016",
+    "account_type": "savings",
+    "account_number": "1000-3504-7126-0037",
+    "balance_usd": 18122.54,
+    "currency": "USD",
+    "status": "active",
+    "opened_date": "2012-12-29"
+  },
+  {
+    "id": "ACC-00038",
+    "customer_id": "CUST-00016",
+    "account_type": "current",
+    "account_number": "2000-9837-9689-0038",
+    "balance_usd": 12105.13,
+    "currency": "USD",
+    "status": "active",
+    "opened_date": "2013-02-27"
+  },
+  {
+    "id": "ACC-00039",
+    "customer_id": "CUST-00017",
+    "account_type": "savings",
+    "account_number": "1000-6310-9005-0039",
+    "balance_usd": 32108.72,
+    "currency": "USD",
+    "status": "active",
+    "opened_date": "2016-05-12"
+  },
+  {
+    "id": "ACC-00040",
+    "customer_id": "CUST-00017",
+    "account_type": "current",
+    "account_number": "2000-6947-6038-0040",
+    "balance_usd": 21198.11,
+    "currency": "USD",
+    "status": "active",
+    "opened_date": "2016-07-11"
+  },
+  {
+    "id": "ACC-00041",
+    "customer_id": "CUST-00018",
+    "account_type": "savings",
+    "account_number": "1000-4946-2290-0041",
+    "balance_usd": 33707.21,
+    "currency": "USD",
+    "status": "active",
+    "opened_date": "2012-07-02"
+  },
+  {
+    "id": "ACC-00042",
+    "customer_id": "CUST-00018",
+    "account_type": "current",
+    "account_number": "2000-8962-2133-0042",
+    "balance_usd": 22458.09,
+    "currency": "USD",
+    "status": "active",
+    "opened_date": "2012-08-31"
+  },
+  {
+    "id": "ACC-00043",
+    "customer_id": "CUST-00019",
+    "account_type": "savings",
+    "account_number": "1000-9727-3060-0043",
+    "balance_usd": 75137.6,
+    "currency": "USD",
+    "status": "active",
+    "opened_date": "2010-02-13"
+  },
+  {
+    "id": "ACC-00044",
+    "customer_id": "CUST-00019",
+    "account_type": "current",
+    "account_number": "2000-8787-3705-0044",
+    "balance_usd": 49889.95,
+    "currency": "USD",
+    "status": "active",
+    "opened_date": "2010-04-14"
+  },
+  {
+    "id": "ACC-00045",
+    "customer_id": "CUST-00019",
+    "account_type": "fixed_deposit",
+    "account_number": "3000-4470-9835-0045",
+    "balance_usd": 20000.0,
+    "currency": "USD",
+    "status": "active",
+    "opened_date": "2025-06-05",
+    "interest_rate": 4.41,
+    "maturity_date": "2026-06-05"
+  },
+  {
+    "id": "ACC-00046",
+    "customer_id": "CUST-00020",
+    "account_type": "savings",
+    "account_number": "1000-4295-6107-0046",
+    "balance_usd": 563.11,
+    "currency": "USD",
+    "status": "active",
+    "opened_date": "2015-10-15"
+  },
+  {
+    "id": "ACC-00047",
+    "customer_id": "CUST-00020",
+    "account_type": "current",
+    "account_number": "2000-7118-8177-0047",
+    "balance_usd": 287.13,
+    "currency": "USD",
+    "status": "active",
+    "opened_date": "2015-12-14"
+  },
+  {
+    "id": "ACC-00048",
+    "customer_id": "CUST-00021",
+    "account_type": "savings",
+    "account_number": "1000-8397-2982-0048",
+    "balance_usd": 72822.44,
+    "currency": "USD",
+    "status": "active",
+    "opened_date": "2019-03-28"
+  },
+  {
+    "id": "ACC-00049",
+    "customer_id": "CUST-00021",
+    "account_type": "current",
+    "account_number": "2000-2049-6539-0049",
+    "balance_usd": 48391.31,
+    "currency": "USD",
+    "status": "active",
+    "opened_date": "2019-05-27"
+  },
+  {
+    "id": "ACC-00050",
+    "customer_id": "CUST-00021",
+    "account_type": "fixed_deposit",
+    "account_number": "3000-1117-2163-0050",
+    "balance_usd": 5000.0,
+    "currency": "USD",
+    "status": "active",
+    "opened_date": "2025-02-28",
+    "interest_rate": 4.55,
+    "maturity_date": "2025-08-27"
+  },
+  {
+    "id": "ACC-00051",
+    "customer_id": "CUST-00022",
+    "account_type": "savings",
+    "account_number": "1000-1964-4750-0051",
+    "balance_usd": 6367.46,
+    "currency": "USD",
+    "status": "active",
+    "opened_date": "2013-01-28"
+  },
+  {
+    "id": "ACC-00052",
+    "customer_id": "CUST-00022",
+    "account_type": "current",
+    "account_number": "2000-1514-6413-0052",
+    "balance_usd": 4103.03,
+    "currency": "USD",
+    "status": "active",
+    "opened_date": "2013-03-29"
+  },
+  {
+    "id": "ACC-00053",
+    "customer_id": "CUST-00023",
+    "account_type": "savings",
+    "account_number": "1000-4899-5562-0053",
+    "balance_usd": 31444.44,
+    "currency": "USD",
+    "status": "active",
+    "opened_date": "2022-02-10"
+  },
+  {
+    "id": "ACC-00054",
+    "customer_id": "CUST-00023",
+    "account_type": "current",
+    "account_number": "2000-4510-9834-0054",
+    "balance_usd": 21111.2,
+    "currency": "USD",
+    "status": "active",
+    "opened_date": "2022-04-11"
+  },
+  {
+    "id": "ACC-00055",
+    "customer_id": "CUST-00024",
+    "account_type": "savings",
+    "account_number": "1000-8744-4981-0055",
+    "balance_usd": 69550.59,
+    "currency": "USD",
+    "status": "active",
+    "opened_date": "2017-03-08"
+  },
+  {
+    "id": "ACC-00056",
+    "customer_id": "CUST-00024",
+    "account_type": "current",
+    "account_number": "2000-7669-4119-0056",
+    "balance_usd": 46522.04,
+    "currency": "USD",
+    "status": "active",
+    "opened_date": "2017-05-07"
+  },
+  {
+    "id": "ACC-00057",
+    "customer_id": "CUST-00025",
+    "account_type": "savings",
+    "account_number": "1000-8062-6804-0057",
+    "balance_usd": 18385.78,
+    "currency": "USD",
+    "status": "active",
+    "opened_date": "2005-04-10"
+  },
+  {
+    "id": "ACC-00058",
+    "customer_id": "CUST-00025",
+    "account_type": "current",
+    "account_number": "2000-8651-1887-0058",
+    "balance_usd": 12350.08,
+    "currency": "USD",
+    "status": "active",
+    "opened_date": "2005-06-09"
+  },
+  {
+    "id": "ACC-00059",
+    "customer_id": "CUST-00026",
+    "account_type": "savings",
+    "account_number": "1000-2612-1993-0059",
+    "balance_usd": 10400.89,
+    "currency": "USD",
+    "status": "active",
+    "opened_date": "2005-05-10"
+  },
+  {
+    "id": "ACC-00060",
+    "customer_id": "CUST-00026",
+    "account_type": "current",
+    "account_number": "2000-6559-2790-0060",
+    "balance_usd": 6868.22,
+    "currency": "USD",
+    "status": "active",
+    "opened_date": "2005-07-09"
+  },
+  {
+    "id": "ACC-00061",
+    "customer_id": "CUST-00027",
+    "account_type": "savings",
+    "account_number": "1000-4116-9786-0061",
+    "balance_usd": 18958.22,
+    "currency": "USD",
+    "status": "active",
+    "opened_date": "2013-06-27"
+  },
+  {
+    "id": "ACC-00062",
+    "customer_id": "CUST-00027",
+    "account_type": "current",
+    "account_number": "2000-7912-4006-0062",
+    "balance_usd": 12695.56,
+    "currency": "USD",
+    "status": "active",
+    "opened_date": "2013-08-26"
+  },
+  {
+    "id": "ACC-00063",
+    "customer_id": "CUST-00028",
+    "account_type": "savings",
+    "account_number": "1000-5092-2235-0063",
+    "balance_usd": 33216.53,
+    "currency": "USD",
+    "status": "active",
+    "opened_date": "2008-03-25"
+  },
+  {
+    "id": "ACC-00064",
+    "customer_id": "CUST-00028",
+    "account_type": "current",
+    "account_number": "2000-2604-1828-0064",
+    "balance_usd": 22192.03,
+    "currency": "USD",
+    "status": "active",
+    "opened_date": "2008-05-24"
+  },
+  {
+    "id": "ACC-00065",
+    "customer_id": "CUST-00028",
+    "account_type": "fixed_deposit",
+    "account_number": "3000-3724-7658-0065",
+    "balance_usd": 50000.0,
+    "currency": "USD",
+    "status": "active",
+    "opened_date": "2025-01-24",
+    "interest_rate": 5.12,
+    "maturity_date": "2025-07-23"
+  },
+  {
+    "id": "ACC-00066",
+    "customer_id": "CUST-00029",
+    "account_type": "savings",
+    "account_number": "1000-4502-7570-0066",
+    "balance_usd": 3418.87,
+    "currency": "USD",
+    "status": "active",
+    "opened_date": "2021-02-15"
+  },
+  {
+    "id": "ACC-00067",
+    "customer_id": "CUST-00029",
+    "account_type": "current",
+    "account_number": "2000-3697-7209-0067",
+    "balance_usd": 2363.56,
+    "currency": "USD",
+    "status": "active",
+    "opened_date": "2021-04-16"
+  },
+  {
+    "id": "ACC-00068",
+    "customer_id": "CUST-00030",
+    "account_type": "savings",
+    "account_number": "1000-7396-5345-0068",
+    "balance_usd": 11646.0,
+    "currency": "USD",
+    "status": "active",
+    "opened_date": "2008-01-25"
+  },
+  {
+    "id": "ACC-00069",
+    "customer_id": "CUST-00030",
+    "account_type": "current",
+    "account_number": "2000-8454-5673-0069",
+    "balance_usd": 7982.06,
+    "currency": "USD",
+    "status": "active",
+    "opened_date": "2008-03-25"
+  },
+  {
+    "id": "ACC-00070",
+    "customer_id": "CUST-00031",
+    "account_type": "savings",
+    "account_number": "1000-8973-3536-0070",
+    "balance_usd": 59086.08,
+    "currency": "USD",
+    "status": "active",
+    "opened_date": "2020-06-20"
+  },
+  {
+    "id": "ACC-00071",
+    "customer_id": "CUST-00031",
+    "account_type": "current",
+    "account_number": "2000-4566-1958-0071",
+    "balance_usd": 39349.23,
+    "currency": "USD",
+    "status": "active",
+    "opened_date": "2020-08-19"
+  },
+  {
+    "id": "ACC-00072",
+    "customer_id": "CUST-00031",
+    "account_type": "fixed_deposit",
+    "account_number": "3000-1936-1821-0072",
+    "balance_usd": 50000.0,
+    "currency": "USD",
+    "status": "active",
+    "opened_date": "2025-01-16",
+    "interest_rate": 4.89,
+    "maturity_date": "2026-01-16"
+  },
+  {
+    "id": "ACC-00073",
+    "customer_id": "CUST-00032",
+    "account_type": "savings",
+    "account_number": "1000-9238-9701-0073",
+    "balance_usd": 2101.4,
+    "currency": "USD",
+    "status": "active",
+    "opened_date": "2019-01-27"
+  },
+  {
+    "id": "ACC-00074",
+    "customer_id": "CUST-00032",
+    "account_type": "current",
+    "account_number": "2000-9320-2312-0074",
+    "balance_usd": 1309.97,
+    "currency": "USD",
+    "status": "active",
+    "opened_date": "2019-03-28"
+  },
+  {
+    "id": "ACC-00075",
+    "customer_id": "CUST-00033",
+    "account_type": "savings",
+    "account_number": "1000-2122-2113-0075",
+    "balance_usd": 65955.31,
+    "currency": "USD",
+    "status": "active",
+    "opened_date": "2021-05-16"
+  },
+  {
+    "id": "ACC-00076",
+    "customer_id": "CUST-00033",
+    "account_type": "current",
+    "account_number": "2000-4853-7615-0076",
+    "balance_usd": 43911.55,
+    "currency": "USD",
+    "status": "active",
+    "opened_date": "2021-07-15"
+  },
+  {
+    "id": "ACC-00077",
+    "customer_id": "CUST-00034",
+    "account_type": "savings",
+    "account_number": "1000-5033-1651-0077",
+    "balance_usd": 8786.69,
+    "currency": "USD",
+    "status": "active",
+    "opened_date": "2013-01-28"
+  },
+  {
+    "id": "ACC-00078",
+    "customer_id": "CUST-00034",
+    "account_type": "current",
+    "account_number": "2000-7868-9565-0078",
+    "balance_usd": 5983.04,
+    "currency": "USD",
+    "status": "active",
+    "opened_date": "2013-03-29"
+  },
+  {
+    "id": "ACC-00079",
+    "customer_id": "CUST-00035",
+    "account_type": "savings",
+    "account_number": "1000-5272-4346-0079",
+    "balance_usd": 5453.59,
+    "currency": "USD",
+    "status": "active",
+    "opened_date": "2014-09-20"
+  },
+  {
+    "id": "ACC-00080",
+    "customer_id": "CUST-00035",
+    "account_type": "current",
+    "account_number": "2000-6147-4910-0080",
+    "balance_usd": 3718.64,
+    "currency": "USD",
+    "status": "active",
+    "opened_date": "2014-11-19"
+  },
+  {
+    "id": "ACC-00081",
+    "customer_id": "CUST-00036",
+    "account_type": "savings",
+    "account_number": "1000-3144-5915-0081",
+    "balance_usd": 14536.7,
+    "currency": "USD",
+    "status": "active",
+    "opened_date": "2021-02-15"
+  },
+  {
+    "id": "ACC-00082",
+    "customer_id": "CUST-00036",
+    "account_type": "current",
+    "account_number": "2000-2188-1152-0082",
+    "balance_usd": 9745.08,
+    "currency": "USD",
+    "status": "active",
+    "opened_date": "2021-04-16"
+  },
+  {
+    "id": "ACC-00083",
+    "customer_id": "CUST-00037",
+    "account_type": "savings",
+    "account_number": "1000-2638-2200-0083",
+    "balance_usd": 33312.65,
+    "currency": "USD",
+    "status": "active",
+    "opened_date": "2014-06-22"
+  },
+  {
+    "id": "ACC-00084",
+    "customer_id": "CUST-00037",
+    "account_type": "current",
+    "account_number": "2000-9288-5345-0084",
+    "balance_usd": 22227.09,
+    "currency": "USD",
+    "status": "active",
+    "opened_date": "2014-08-21"
+  },
+  {
+    "id": "ACC-00085",
+    "customer_id": "CUST-00038",
+    "account_type": "savings",
+    "account_number": "1000-6718-2127-0085",
+    "balance_usd": 23341.31,
+    "currency": "USD",
+    "status": "active",
+    "opened_date": "2009-08-17"
+  },
+  {
+    "id": "ACC-00086",
+    "customer_id": "CUST-00038",
+    "account_type": "current",
+    "account_number": "2000-7054-5669-0086",
+    "balance_usd": 15734.74,
+    "currency": "USD",
+    "status": "active",
+    "opened_date": "2009-10-16"
+  },
+  {
+    "id": "ACC-00087",
+    "customer_id": "CUST-00039",
+    "account_type": "savings",
+    "account_number": "1000-9900-5956-0087",
+    "balance_usd": 47206.57,
+    "currency": "USD",
+    "status": "active",
+    "opened_date": "2005-03-11"
+  },
+  {
+    "id": "ACC-00088",
+    "customer_id": "CUST-00039",
+    "account_type": "current",
+    "account_number": "2000-9666-1128-0088",
+    "balance_usd": 31584.65,
+    "currency": "USD",
+    "status": "active",
+    "opened_date": "2005-05-10"
+  },
+  {
+    "id": "ACC-00089",
+    "customer_id": "CUST-00040",
+    "account_type": "savings",
+    "account_number": "1000-5905-2697-0089",
+    "balance_usd": 60434.15,
+    "currency": "USD",
+    "status": "active",
+    "opened_date": "2020-01-22"
+  },
+  {
+    "id": "ACC-00090",
+    "customer_id": "CUST-00040",
+    "account_type": "current",
+    "account_number": "2000-3200-5333-0090",
+    "balance_usd": 40332.46,
+    "currency": "USD",
+    "status": "active",
+    "opened_date": "2020-03-22"
+  },
+  {
+    "id": "ACC-00091",
+    "customer_id": "CUST-00041",
+    "account_type": "savings",
+    "account_number": "1000-2753-3546-0091",
+    "balance_usd": 61027.16,
+    "currency": "USD",
+    "status": "active",
+    "opened_date": "2010-12-10"
+  },
+  {
+    "id": "ACC-00092",
+    "customer_id": "CUST-00041",
+    "account_type": "current",
+    "account_number": "2000-4450-6617-0092",
+    "balance_usd": 40741.79,
+    "currency": "USD",
+    "status": "active",
+    "opened_date": "2011-02-08"
+  },
+  {
+    "id": "ACC-00093",
+    "customer_id": "CUST-00042",
+    "account_type": "savings",
+    "account_number": "1000-5325-9280-0093",
+    "balance_usd": 46999.55,
+    "currency": "USD",
+    "status": "active",
+    "opened_date": "2013-07-27"
+  },
+  {
+    "id": "ACC-00094",
+    "customer_id": "CUST-00042",
+    "account_type": "current",
+    "account_number": "2000-1832-2512-0094",
+    "balance_usd": 31409.78,
+    "currency": "USD",
+    "status": "active",
+    "opened_date": "2013-09-25"
+  },
+  {
+    "id": "ACC-00095",
+    "customer_id": "CUST-00043",
+    "account_type": "savings",
+    "account_number": "1000-5533-1722-0095",
+    "balance_usd": 17628.94,
+    "currency": "USD",
+    "status": "active",
+    "opened_date": "2020-08-19"
+  },
+  {
+    "id": "ACC-00096",
+    "customer_id": "CUST-00043",
+    "account_type": "current",
+    "account_number": "2000-3143-5291-0096",
+    "balance_usd": 11617.53,
+    "currency": "USD",
+    "status": "active",
+    "opened_date": "2020-10-18"
+  },
+  {
+    "id": "ACC-00097",
+    "customer_id": "CUST-00044",
+    "account_type": "savings",
+    "account_number": "1000-8239-8007-0097",
+    "balance_usd": 67756.07,
+    "currency": "USD",
+    "status": "active",
+    "opened_date": "2015-08-16"
+  },
+  {
+    "id": "ACC-00098",
+    "customer_id": "CUST-00044",
+    "account_type": "current",
+    "account_number": "2000-2832-2232-0098",
+    "balance_usd": 45273.14,
+    "currency": "USD",
+    "status": "active",
+    "opened_date": "2015-10-15"
+  },
+  {
+    "id": "ACC-00099",
+    "customer_id": "CUST-00045",
+    "account_type": "savings",
+    "account_number": "1000-3442-9938-0099",
+    "balance_usd": 20866.29,
+    "currency": "USD",
+    "status": "active",
+    "opened_date": "2019-02-26"
+  },
+  {
+    "id": "ACC-00100",
+    "customer_id": "CUST-00045",
+    "account_type": "current",
+    "account_number": "2000-7049-3426-0100",
+    "balance_usd": 13699.39,
+    "currency": "USD",
+    "status": "active",
+    "opened_date": "2019-04-27"
+  },
+  {
+    "id": "ACC-00101",
+    "customer_id": "CUST-00046",
+    "account_type": "savings",
+    "account_number": "1000-1685-6050-0101",
+    "balance_usd": 2286.31,
+    "currency": "USD",
+    "status": "active",
+    "opened_date": "2012-08-01"
+  },
+  {
+    "id": "ACC-00102",
+    "customer_id": "CUST-00046",
+    "account_type": "current",
+    "account_number": "2000-1653-6862-0102",
+    "balance_usd": 1515.86,
+    "currency": "USD",
+    "status": "active",
+    "opened_date": "2012-09-30"
+  },
+  {
+    "id": "ACC-00103",
+    "customer_id": "CUST-00047",
+    "account_type": "savings",
+    "account_number": "1000-5088-2684-0103",
+    "balance_usd": 24599.41,
+    "currency": "USD",
+    "status": "active",
+    "opened_date": "2014-03-24"
+  },
+  {
+    "id": "ACC-00104",
+    "customer_id": "CUST-00047",
+    "account_type": "current",
+    "account_number": "2000-7658-3532-0104",
+    "balance_usd": 16447.66,
+    "currency": "USD",
+    "status": "active",
+    "opened_date": "2014-05-23"
+  },
+  {
+    "id": "ACC-00105",
+    "customer_id": "CUST-00048",
+    "account_type": "savings",
+    "account_number": "1000-4878-3662-0105",
+    "balance_usd": 5596.1,
+    "currency": "USD",
+    "status": "active",
+    "opened_date": "2010-02-13"
+  },
+  {
+    "id": "ACC-00106",
+    "customer_id": "CUST-00048",
+    "account_type": "current",
+    "account_number": "2000-3900-7755-0106",
+    "balance_usd": 3712.44,
+    "currency": "USD",
+    "status": "active",
+    "opened_date": "2010-04-14"
+  },
+  {
+    "id": "ACC-00107",
+    "customer_id": "CUST-00049",
+    "account_type": "savings",
+    "account_number": "1000-6442-7745-0107",
+    "balance_usd": 70907.36,
+    "currency": "USD",
+    "status": "active",
+    "opened_date": "2011-12-05"
+  },
+  {
+    "id": "ACC-00108",
+    "customer_id": "CUST-00049",
+    "account_type": "current",
+    "account_number": "2000-5065-5371-0108",
+    "balance_usd": 47458.75,
+    "currency": "USD",
+    "status": "active",
+    "opened_date": "2012-02-03"
+  },
+  {
+    "id": "ACC-00109",
+    "customer_id": "CUST-00050",
+    "account_type": "savings",
+    "account_number": "1000-2771-7267-0109",
+    "balance_usd": 2081.86,
+    "currency": "USD",
+    "status": "active",
+    "opened_date": "2011-08-07"
+  },
+  {
+    "id": "ACC-00110",
+    "customer_id": "CUST-00050",
+    "account_type": "current",
+    "account_number": "2000-8711-4644-0110",
+    "balance_usd": 1553.22,
+    "currency": "USD",
+    "status": "active",
+    "opened_date": "2011-10-06"
+  }
+]

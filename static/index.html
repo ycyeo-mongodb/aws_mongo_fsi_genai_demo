@@ -1,0 +1,1870 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Atlas Digital Bank</title>
+<style>
+/* ── Reset & Variables ─────────────────────────────────── */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --primary:#1a237e;--primary-light:#283593;--primary-dark:#0d1456;
+  --accent:#00c853;--accent-dark:#00a844;
+  --surface:#f5f7fa;--card:#fff;--text:#1e293b;--text-muted:#64748b;
+  --border:#e2e8f0;--danger:#ef4444;--warning:#f59e0b;--success:#22c55e;
+  --radius:12px;--shadow:0 1px 3px rgba(0,0,0,.08),0 1px 2px rgba(0,0,0,.06);
+  --shadow-lg:0 10px 25px rgba(0,0,0,.1);
+  --font:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+  --chatbot-size:60px;
+}
+html{font-family:var(--font);font-size:14px;color:var(--text);background:var(--surface)}
+body{min-height:100vh}
+a{color:var(--primary);text-decoration:none}
+button{cursor:pointer;font-family:inherit;font-size:inherit}
+input,select,textarea{font-family:inherit;font-size:inherit}
+
+/* ── Portal Switcher (top bar) ─────────────────────────── */
+.portal-bar{
+  display:flex;align-items:center;justify-content:space-between;
+  background:var(--primary-dark);color:#fff;padding:0 24px;height:40px;font-size:12px;
+}
+.portal-bar .tabs{display:flex;gap:0}
+.portal-bar .tabs button{
+  background:none;border:none;color:rgba(255,255,255,.6);padding:10px 18px;
+  font-size:12px;font-weight:600;letter-spacing:.5px;text-transform:uppercase;
+  border-bottom:2px solid transparent;transition:all .2s;
+}
+.portal-bar .tabs button.active{color:#fff;border-bottom-color:var(--accent)}
+.portal-bar .tabs button:hover{color:#fff}
+.portal-bar .env-badge{
+  background:var(--accent);color:#000;padding:2px 10px;border-radius:10px;font-weight:700;font-size:11px;
+}
+
+/* ── Header ────────────────────────────────────────────── */
+.header{
+  background:linear-gradient(135deg,var(--primary) 0%,var(--primary-light) 100%);
+  color:#fff;padding:0 32px;height:64px;display:flex;align-items:center;justify-content:space-between;
+}
+.header .brand{display:flex;align-items:center;gap:12px;font-size:20px;font-weight:700}
+.header .brand .logo{
+  width:36px;height:36px;background:var(--accent);border-radius:8px;
+  display:flex;align-items:center;justify-content:center;font-weight:900;color:var(--primary-dark);font-size:16px;
+}
+.header .user-info{display:flex;align-items:center;gap:16px}
+.header .user-info .avatar{
+  width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,.2);
+  display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;
+}
+.header .user-info span{font-size:13px;opacity:.9}
+#custPicker{
+  padding:4px 10px;border:1px solid rgba(255,255,255,.25);border-radius:6px;
+  background:rgba(255,255,255,.1);color:#fff;font-size:12px;max-width:220px;
+}
+#custPicker option{color:var(--text);background:#fff}
+
+/* ── Layout ────────────────────────────────────────────── */
+.app-body{display:flex;min-height:calc(100vh - 104px)}
+.sidebar{width:240px;background:var(--card);border-right:1px solid var(--border);padding:20px 0;flex-shrink:0}
+.sidebar .nav-group{margin-bottom:16px}
+.sidebar .nav-group-title{padding:8px 24px;font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);font-weight:700}
+.sidebar .nav-item{
+  display:flex;align-items:center;gap:12px;padding:10px 24px;color:var(--text-muted);
+  font-size:13px;font-weight:500;transition:all .15s;cursor:pointer;border-left:3px solid transparent;
+}
+.sidebar .nav-item:hover{background:var(--surface);color:var(--text)}
+.sidebar .nav-item.active{color:var(--primary);background:#e8eaf6;border-left-color:var(--primary);font-weight:600}
+.sidebar .nav-item .icon{width:20px;text-align:center;font-size:16px}
+.main{flex:1;padding:28px 32px;overflow-y:auto;max-height:calc(100vh - 104px)}
+
+/* ── Cards ─────────────────────────────────────────────── */
+.card{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:24px;margin-bottom:20px}
+.card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.card-header h3{font-size:16px;font-weight:700}
+.card-header .badge{font-size:11px;padding:3px 10px;border-radius:20px;font-weight:600}
+.badge-success{background:#dcfce7;color:#166534}
+.badge-warning{background:#fef3c7;color:#92400e}
+.badge-danger{background:#fee2e2;color:#991b1b}
+.badge-info{background:#e0e7ff;color:#3730a3}
+
+/* ── Account Cards ─────────────────────────────────────── */
+.accounts-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:20px;margin-bottom:28px}
+.account-card{
+  background:linear-gradient(135deg,var(--primary) 0%,var(--primary-light) 100%);
+  color:#fff;border-radius:var(--radius);padding:24px;position:relative;overflow:hidden;
+}
+.account-card.savings{background:linear-gradient(135deg,#0d47a1 0%,#1565c0 100%)}
+.account-card.current{background:linear-gradient(135deg,#1a237e 0%,#283593 100%)}
+.account-card.fixed_deposit{background:linear-gradient(135deg,#004d40 0%,#00695c 100%)}
+.account-card::after{
+  content:'';position:absolute;top:-30px;right:-30px;width:120px;height:120px;
+  border-radius:50%;background:rgba(255,255,255,.06);
+}
+.account-card .label{font-size:12px;opacity:.7;margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px}
+.account-card .number{font-size:13px;opacity:.6;margin-bottom:16px;font-family:monospace}
+.account-card .balance{font-size:28px;font-weight:700;margin-bottom:4px}
+.account-card .balance-label{font-size:11px;opacity:.5}
+
+/* ── Transactions Table ────────────────────────────────── */
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse}
+th{text-align:left;padding:10px 16px;font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:var(--text-muted);border-bottom:2px solid var(--border);font-weight:700}
+td{padding:12px 16px;border-bottom:1px solid var(--border);font-size:13px}
+tr:hover{background:var(--surface)}
+.amount-positive{color:var(--success);font-weight:600}
+.amount-negative{color:var(--text);font-weight:600}
+
+/* ── Quick Actions ─────────────────────────────────────── */
+.quick-actions{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px;margin-bottom:28px}
+.quick-action{
+  display:flex;flex-direction:column;align-items:center;gap:8px;padding:20px 12px;
+  background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);
+  border:1px solid var(--border);transition:all .2s;cursor:pointer;
+}
+.quick-action:hover{border-color:var(--primary);transform:translateY(-2px);box-shadow:var(--shadow-lg)}
+.quick-action .qa-icon{font-size:24px}
+.quick-action .qa-label{font-size:12px;font-weight:600;color:var(--text-muted);text-align:center}
+
+/* ── Section Headers ───────────────────────────────────── */
+.section-title{font-size:18px;font-weight:700;margin-bottom:20px;display:flex;align-items:center;gap:8px}
+.section-subtitle{font-size:13px;color:var(--text-muted);margin-bottom:16px}
+
+/* ── Forms ─────────────────────────────────────────────── */
+.form-group{margin-bottom:16px}
+.form-group label{display:block;font-size:12px;font-weight:600;color:var(--text-muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:.3px}
+.form-group select,.form-group input,.form-group textarea{
+  width:100%;padding:10px 14px;border:1px solid var(--border);border-radius:8px;
+  background:var(--card);color:var(--text);transition:border-color .2s;
+}
+.form-group select:focus,.form-group input:focus,.form-group textarea:focus{outline:none;border-color:var(--primary)}
+.btn{
+  display:inline-flex;align-items:center;gap:8px;padding:10px 20px;border:none;border-radius:8px;
+  font-weight:600;font-size:13px;transition:all .2s;
+}
+.btn-primary{background:var(--primary);color:#fff}
+.btn-primary:hover{background:var(--primary-light)}
+.btn-primary:disabled{opacity:.5;cursor:not-allowed}
+.btn-outline{background:transparent;border:1px solid var(--border);color:var(--text)}
+.btn-outline:hover{border-color:var(--primary);color:var(--primary)}
+.ask-suggestion{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:4px 12px;font-size:11px;color:var(--text-muted);cursor:pointer;transition:all .15s}
+.ask-suggestion:hover{border-color:var(--accent);color:var(--accent);background:rgba(37,99,235,.04)}
+
+/* ── Result Panels ─────────────────────────────────────── */
+.result-panel{background:var(--surface);border-radius:8px;padding:20px;margin-top:16px;border:1px solid var(--border)}
+.result-panel h4{font-size:14px;font-weight:700;margin-bottom:12px}
+.metric-row{display:flex;gap:16px;margin-bottom:12px;flex-wrap:wrap}
+.metric{flex:1;min-width:120px;background:var(--card);border-radius:8px;padding:14px;text-align:center;border:1px solid var(--border)}
+.metric .metric-value{font-size:22px;font-weight:700;margin-bottom:2px}
+.metric .metric-label{font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.3px}
+.explanation-box{background:var(--card);border-radius:8px;padding:16px;margin-top:12px;border-left:4px solid var(--primary);line-height:1.7;font-size:13px}
+.duplicate-item{
+  display:flex;align-items:center;justify-content:space-between;padding:12px 16px;
+  background:var(--card);border-radius:8px;margin-bottom:8px;border:1px solid var(--border);
+}
+.risk-flag{display:inline-block;padding:3px 10px;border-radius:12px;font-size:11px;font-weight:600;margin-right:6px;margin-bottom:4px}
+
+/* ── Chatbot Widget ────────────────────────────────────── */
+.chatbot-fab{
+  position:fixed;bottom:24px;right:24px;width:var(--chatbot-size);height:var(--chatbot-size);
+  border-radius:50%;background:var(--primary);color:#fff;border:none;
+  box-shadow:0 4px 16px rgba(26,35,126,.4);z-index:1000;font-size:26px;
+  display:flex;align-items:center;justify-content:center;transition:all .3s;
+}
+.chatbot-fab:hover{transform:scale(1.08);box-shadow:0 6px 24px rgba(26,35,126,.5)}
+.chatbot-fab.open{background:var(--text);transform:rotate(0)}
+.chatbot-panel{
+  position:fixed;bottom:96px;right:24px;width:400px;height:540px;
+  background:var(--card);border-radius:16px;box-shadow:0 20px 60px rgba(0,0,0,.2);
+  z-index:999;display:none;flex-direction:column;overflow:hidden;
+  border:1px solid var(--border);transition:width .3s,height .3s;
+}
+.chatbot-panel.pipeline-on{width:620px;height:80vh}
+.chatbot-panel.visible{display:flex}
+.chatbot-panel .chat-header{
+  background:linear-gradient(135deg,var(--primary) 0%,var(--primary-light) 100%);
+  color:#fff;padding:16px 20px;font-weight:700;font-size:15px;
+  display:flex;align-items:center;gap:10px;
+}
+.chatbot-panel .chat-header .status-dot{width:8px;height:8px;border-radius:50%;background:var(--accent)}
+.chatbot-panel .chat-messages{
+  flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:12px;
+}
+.chat-msg{max-width:85%;padding:10px 14px;border-radius:12px;font-size:13px;line-height:1.6;word-wrap:break-word}
+.chat-msg.bot{background:var(--surface);color:var(--text);align-self:flex-start;border-bottom-left-radius:4px}
+.chat-msg.user{background:var(--primary);color:#fff;align-self:flex-end;border-bottom-right-radius:4px}
+.chat-msg.bot .sources{margin-top:8px;padding-top:8px;border-top:1px solid var(--border);font-size:11px;color:var(--text-muted)}
+.chat-msg.bot .sources strong{color:var(--text)}
+.chat-typing{align-self:flex-start;padding:10px 14px;background:var(--surface);border-radius:12px;font-size:13px;color:var(--text-muted)}
+.chatbot-panel .chat-input{
+  display:flex;gap:8px;padding:12px 16px;border-top:1px solid var(--border);background:var(--card);
+}
+.chatbot-panel .chat-input input{
+  flex:1;padding:10px 14px;border:1px solid var(--border);border-radius:24px;
+  background:var(--surface);font-size:13px;
+}
+.chatbot-panel .chat-input input:focus{outline:none;border-color:var(--primary)}
+.chatbot-panel .chat-input button{
+  width:40px;height:40px;border-radius:50%;background:var(--primary);color:#fff;border:none;
+  display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;
+}
+.chatbot-panel .chat-input button:disabled{opacity:.4}
+
+/* ── Loader ────────────────────────────────────────────── */
+.spinner{display:inline-block;width:18px;height:18px;border:2px solid var(--border);border-top-color:var(--primary);border-radius:50%;animation:spin .6s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading-row{display:flex;align-items:center;gap:8px;padding:16px;color:var(--text-muted);font-size:13px}
+
+/* ── Hide/show ─────────────────────────────────────────── */
+.hidden{display:none!important}
+
+/* ── Responsive ────────────────────────────────────────── */
+@media(max-width:768px){
+  .sidebar{display:none}
+  .main{padding:16px}
+  .accounts-grid{grid-template-columns:1fr}
+  .chatbot-panel{width:calc(100vw - 32px);right:16px;bottom:88px;height:60vh}
+}
+</style>
+</head>
+<body>
+
+<!-- ── Portal Switcher ───────────────────────────────── -->
+<div class="portal-bar">
+  <div class="tabs">
+    <button class="active" onclick="switchPortal('customer')">Internet Banking</button>
+    <button onclick="switchPortal('employee')">Employee Portal</button>
+  </div>
+  <span class="env-badge">WORKSHOP DEMO</span>
+</div>
+
+<!-- ── Header ────────────────────────────────────────── -->
+<div class="header">
+  <div class="brand">
+    <div class="logo">AB</div>
+    <span>Atlas Digital Bank</span>
+  </div>
+  <div class="user-info">
+    <select id="custPicker" class="hidden"><option value="">Loading customers...</option></select>
+    <span id="headerUserName">Welcome</span>
+    <div class="avatar" id="headerAvatar">--</div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════ -->
+<!-- CUSTOMER PORTAL                                     -->
+<!-- ═══════════════════════════════════════════════════ -->
+<div id="customerPortal" class="app-body">
+  <nav class="sidebar">
+    <div class="nav-group">
+      <div class="nav-group-title">Main</div>
+      <div class="nav-item active" onclick="showCustomerPage('dashboard')"><span class="icon">📊</span>Dashboard</div>
+      <div class="nav-item" onclick="showCustomerPage('accounts')"><span class="icon">🏦</span>Accounts</div>
+      <div class="nav-item" onclick="showCustomerPage('transfers')"><span class="icon">↔️</span>Transfers</div>
+      <div class="nav-item" onclick="showCustomerPage('payments')"><span class="icon">💳</span>Payments</div>
+    </div>
+    <div class="nav-group">
+      <div class="nav-group-title">Services</div>
+      <div class="nav-item" onclick="showCustomerPage('loans')"><span class="icon">📋</span>Loans</div>
+      <div class="nav-item" onclick="showCustomerPage('investments')"><span class="icon">📈</span>Investments</div>
+      <div class="nav-item" onclick="showCustomerPage('settings')"><span class="icon">⚙️</span>Settings</div>
+    </div>
+    <div class="nav-group" style="margin-top:auto;padding:20px 24px">
+      <div style="background:var(--surface);border-radius:8px;padding:16px;font-size:12px;color:var(--text-muted)">
+        <strong style="color:var(--text)">Need help?</strong><br>
+        Use the chat assistant in the bottom-right corner for instant answers about our policies and services.
+      </div>
+    </div>
+  </nav>
+
+  <div class="main" id="customerMain">
+    <!-- Dashboard -->
+    <div id="page-dashboard">
+      <h2 class="section-title" id="dashGreeting">Loading...</h2>
+      <p class="section-subtitle">Here's your financial overview for today.</p>
+      <div class="accounts-grid" id="dashAccounts"></div>
+
+      <h3 class="section-title" style="font-size:16px">Quick Actions</h3>
+      <div class="quick-actions">
+        <div class="quick-action" onclick="showCustomerPage('transfers')"><span class="qa-icon">💸</span><span class="qa-label">Transfer</span></div>
+        <div class="quick-action" onclick="showCustomerPage('payments')"><span class="qa-icon">📱</span><span class="qa-label">Pay Bills</span></div>
+        <div class="quick-action"><span class="qa-icon">🏧</span><span class="qa-label">Card-less ATM</span></div>
+        <div class="quick-action"><span class="qa-icon">🔄</span><span class="qa-label">Standing Order</span></div>
+        <div class="quick-action"><span class="qa-icon">💱</span><span class="qa-label">FX Exchange</span></div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <h3>Recent Transactions</h3>
+          <span style="font-size:12px;color:var(--text-muted)">Last 30 days</span>
+        </div>
+        <div class="table-wrap" id="dashTransactions">
+          <div class="loading-row"><span class="spinner"></span> Loading transactions...</div>
+        </div>
+      </div>
+    </div>
+
+    <div id="page-accounts" class="hidden">
+      <h2 class="section-title">🏦 My Accounts</h2>
+      <div class="accounts-grid" id="acctGrid"></div>
+      <div class="card" id="acctTotalCard">
+        <div class="card-header"><h3>Total Relationship Balance</h3></div>
+        <p style="font-size:32px;font-weight:700;color:var(--primary)" id="acctTotalBal">—</p>
+        <p style="color:var(--text-muted);margin-top:4px;font-size:13px" id="acctTotalCount"></p>
+      </div>
+    </div>
+
+    <div id="page-transfers" class="hidden">
+      <h2 class="section-title">↔️ Fund Transfer</h2>
+      <div class="card" style="max-width:500px">
+        <div class="form-group"><label>From Account</label><select id="xferFromAcct"><option>Loading...</option></select></div>
+        <div class="form-group"><label>To Account / Recipient</label><input type="text" placeholder="Enter account number or select payee"></div>
+        <div class="form-group"><label>Amount (USD)</label><input type="number" placeholder="0.00"></div>
+        <div class="form-group"><label>Remarks (Optional)</label><input type="text" placeholder="e.g. Rent payment"></div>
+        <button class="btn btn-primary" style="width:100%;justify-content:center;margin-top:8px">Transfer Now</button>
+      </div>
+    </div>
+
+    <div id="page-payments" class="hidden">
+      <h2 class="section-title">💳 Bill Payments</h2>
+      <div class="card" style="max-width:500px">
+        <div class="form-group"><label>Biller</label><select><option>Select a biller...</option><option>Electricity — EDC</option><option>Water — PPWSA</option><option>Internet — Cellcard</option><option>Mobile — Smart</option></select></div>
+        <div class="form-group"><label>Account / Reference Number</label><input type="text" placeholder="Enter reference number"></div>
+        <div class="form-group"><label>Amount (USD)</label><input type="number" placeholder="0.00"></div>
+        <button class="btn btn-primary" style="width:100%;justify-content:center;margin-top:8px">Pay Now</button>
+      </div>
+    </div>
+
+    <div id="page-loans" class="hidden">
+      <h2 class="section-title">📋 My Loans</h2>
+      <div id="loansContainer">
+        <div class="loading-row"><span class="spinner"></span> Loading loan data...</div>
+      </div>
+      <!-- Apply for New Loan -->
+      <div class="card" id="loanApplyCard">
+        <div class="card-header">
+          <h3>📄 Apply for New Loan</h3>
+        </div>
+        <p style="font-size:13px;color:var(--text-muted);margin-bottom:16px">Upload a supporting document (payslip, bank statement, ID card, or tax return). We'll use <strong>Amazon Bedrock (Claude)</strong> to intelligently extract all data from your document.</p>
+        <div style="border:2px dashed var(--border);border-radius:10px;padding:32px;text-align:center;transition:all .2s;cursor:pointer" id="loanDropZone"
+             ondragover="event.preventDefault();this.style.borderColor='var(--accent)';this.style.background='rgba(37,99,235,.04)'"
+             ondragleave="this.style.borderColor='var(--border)';this.style.background='transparent'"
+             ondrop="event.preventDefault();this.style.borderColor='var(--border)';this.style.background='transparent';handleLoanUpload(event.dataTransfer.files[0])"
+             onclick="document.getElementById('loanFileInput').click()">
+          <input type="file" id="loanFileInput" accept=".pdf,.png,.jpg,.jpeg,.webp" style="display:none" onchange="handleLoanUpload(this.files[0])">
+          <div style="font-size:32px;margin-bottom:8px">📤</div>
+          <div style="font-size:14px;font-weight:600;color:var(--text-primary)">Drop a file here or click to upload</div>
+          <div style="font-size:12px;color:var(--text-muted);margin-top:4px">PDF, PNG, JPG — payslips, bank statements, ID cards, invoices (max 10 MB)</div>
+        </div>
+        <div id="loanOcrResult" class="hidden" style="margin-top:20px"></div>
+      </div>
+    </div>
+
+    <div id="page-investments" class="hidden">
+      <h2 class="section-title">📈 Investments</h2>
+      <div class="card" style="text-align:center;padding:60px;color:var(--text-muted)"><p>Investment portfolio coming soon.</p></div>
+    </div>
+
+    <div id="page-settings" class="hidden">
+      <h2 class="section-title">⚙️ Settings</h2>
+      <div class="card" style="max-width:500px">
+        <div class="form-group"><label>Display Name</label><input type="text" id="settingsName" value=""></div>
+        <div class="form-group"><label>Employment</label><input type="text" id="settingsEmployment" value="" readonly></div>
+        <div class="form-group"><label>Monthly Income (USD)</label><input type="text" id="settingsIncome" value="" readonly></div>
+        <button class="btn btn-primary" style="margin-top:8px">Save Changes</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════ -->
+<!-- EMPLOYEE PORTAL                                     -->
+<!-- ═══════════════════════════════════════════════════ -->
+<div id="employeePortal" class="app-body hidden">
+  <nav class="sidebar">
+    <div class="nav-group">
+      <div class="nav-group-title">AI Tools</div>
+      <div class="nav-item active" onclick="showEmpTab('credit')"><span class="icon">📊</span>Credit Scoring</div>
+      <div class="nav-item" onclick="showEmpTab('kyc')"><span class="icon">🔍</span>KYC Verification</div>
+    </div>
+    <div class="nav-group">
+      <div class="nav-group-title">Marketing</div>
+      <div class="nav-item" onclick="showEmpTab('intel')"><span class="icon">🎯</span>Customer Intelligence</div>
+    </div>
+    <div class="nav-group">
+      <div class="nav-group-title">Analytics</div>
+      <div class="nav-item" onclick="showEmpTab('analytics')"><span class="icon">📈</span>Dashboard</div>
+      <div class="nav-item" onclick="showEmpTab('askdata')"><span class="icon">🤖</span>Ask Your Data</div>
+    </div>
+    <div class="nav-group" style="margin-top:auto;padding:20px 24px">
+      <div style="background:#e8eaf6;border-radius:8px;padding:14px;font-size:12px;color:var(--primary)">
+        <strong>Powered by</strong><br>MongoDB Atlas + Amazon Bedrock
+      </div>
+    </div>
+  </nav>
+
+  <div class="main">
+    <!-- Credit Scoring Tab -->
+    <div id="tab-credit">
+      <h2 class="section-title">📊 AI-Enhanced Credit Scoring</h2>
+      <p class="section-subtitle">Select a customer and loan application to analyze. The system uses MongoDB aggregation pipelines for feature engineering and an LLM for decision explanation.</p>
+
+      <div class="card">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+          <div class="form-group"><label>Customer</label><select id="creditCustomerSelect"><option value="">Loading customers...</option></select></div>
+          <div class="form-group"><label>Loan Application</label><select id="creditLoanSelect"><option value="">Select a customer first</option></select></div>
+        </div>
+        <button class="btn btn-primary" id="creditAnalyzeBtn" onclick="analyzeCredit()" disabled>
+          <span class="spinner hidden" id="creditSpinner"></span>
+          Analyze Application
+        </button>
+      </div>
+
+      <div id="creditResult" class="hidden">
+        <div class="card">
+          <div class="card-header"><h3>Risk Assessment</h3><span id="creditDecisionBadge" class="badge"></span></div>
+          <div class="metric-row">
+            <div class="metric"><div class="metric-value" id="creditScoreVal">—</div><div class="metric-label">Risk Score</div></div>
+            <div class="metric"><div class="metric-value" id="creditRiskLevel">—</div><div class="metric-label">Risk Level</div></div>
+            <div class="metric"><div class="metric-value" id="creditDTI">—</div><div class="metric-label">DTI Ratio</div></div>
+            <div class="metric"><div class="metric-value" id="creditCreditScore">—</div><div class="metric-label">Credit Score</div></div>
+          </div>
+          <h4 style="margin-top:16px;margin-bottom:8px;font-size:14px">AI-Generated Explanation</h4>
+          <div class="explanation-box" id="creditExplanation"></div>
+        </div>
+
+        <div id="creditDocuments" class="hidden">
+          <div class="card">
+            <div class="card-header"><h3>Supporting Documents</h3><span class="badge badge-info">MONGODB BINARY</span></div>
+            <p style="font-size:13px;color:var(--text-muted);margin-bottom:16px">PDF documents stored in MongoDB (<code>banking.documents</code>) are retrieved, text-extracted, and fed into the LLM prompt so the credit explanation references real payslip and statement figures.</p>
+            <div id="creditDocsContainer" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px"></div>
+          </div>
+        </div>
+
+        <div id="creditRecommendations" class="hidden">
+          <div class="card">
+            <div class="card-header"><h3>Suggested Alternative Products</h3><span class="badge badge-info">VECTOR SEARCH</span></div>
+            <p style="font-size:13px;color:var(--text-muted);margin-bottom:16px">Based on the customer's profile, these products may be a better fit. Recommendations are generated using <strong>Atlas Vector Search</strong> over bank product descriptions.</p>
+            <div id="creditRecsContainer"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- KYC Verification Tab -->
+    <div id="tab-kyc" class="hidden">
+      <h2 class="section-title">🔍 KYC Document Verification</h2>
+      <p class="section-subtitle">Select a KYC document to verify. The system uses MongoDB Atlas Vector Search to find semantically similar documents and flag potential duplicates or fraud.</p>
+
+      <div class="card">
+        <div class="form-group"><label>KYC Document</label><select id="kycDocSelect"><option value="">Loading documents...</option></select></div>
+        <button class="btn btn-primary" id="kycVerifyBtn" onclick="verifyKYC()" disabled>
+          <span class="spinner hidden" id="kycSpinner"></span>
+          Verify Document
+        </button>
+      </div>
+
+      <div id="kycResult" class="hidden">
+        <!-- Document scan + details side-by-side -->
+        <div class="card">
+          <div class="card-header"><h3>Document Scan</h3><span id="kycStatusBadge" class="badge"></span></div>
+          <div id="kycRiskFlags" style="margin-bottom:16px"></div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start" id="kycScanGrid">
+            <div>
+              <div id="kycPdfViewer" style="border:1px solid var(--border);border-radius:8px;overflow:hidden;background:#f5f5f5;min-height:280px;display:flex;align-items:center;justify-content:center">
+                <span style="color:var(--text-muted);font-size:13px">Select a document to view scan</span>
+              </div>
+              <div style="text-align:center;margin-top:8px">
+                <a id="kycPdfLink" href="#" target="_blank" class="btn btn-primary" style="font-size:11px;padding:6px 14px;display:none">Open Full Document</a>
+              </div>
+            </div>
+            <div>
+              <h4 style="margin-bottom:12px;font-size:14px">Extracted Details</h4>
+              <div id="kycDocInfo"></div>
+              <div id="kycCustomerInfo" style="margin-top:12px"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Duplicate detection -->
+        <div class="card" id="kycDuplicatesSection">
+          <div class="card-header"><h3>Duplicate Detection</h3><span class="badge badge-info">VECTOR SEARCH</span></div>
+          <p style="font-size:13px;color:var(--text-muted);margin-bottom:16px">Documents with high semantic similarity to the selected document, detected using <strong>Atlas Vector Search</strong> over description embeddings.</p>
+          <div id="kycDuplicatesList"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Analytics Dashboard Tab -->
+    <div id="tab-analytics" class="hidden">
+      <h2 class="section-title">📈 Analytics Dashboard</h2>
+      <p class="section-subtitle">Real-time insights powered by <strong>MongoDB Aggregation Pipelines</strong>. All charts are computed live from the database.</p>
+
+      <!-- KPI row -->
+      <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:20px" id="analyticsKpis">
+        <div class="card" style="text-align:center;padding:20px">
+          <div style="font-size:24px;font-weight:800;color:var(--accent)" id="kpiCustomers">—</div>
+          <div style="font-size:11px;color:var(--text-muted);margin-top:4px">Total Customers</div>
+        </div>
+        <div class="card" style="text-align:center;padding:20px">
+          <div style="font-size:24px;font-weight:800;color:var(--accent)" id="kpiLoans">—</div>
+          <div style="font-size:11px;color:var(--text-muted);margin-top:4px">Loan Applications</div>
+        </div>
+        <div class="card" style="text-align:center;padding:20px">
+          <div style="font-size:24px;font-weight:800;color:var(--accent)" id="kpiKyc">—</div>
+          <div style="font-size:11px;color:var(--text-muted);margin-top:4px">KYC Documents</div>
+        </div>
+        <div class="card" style="text-align:center;padding:20px">
+          <div style="font-size:24px;font-weight:800;color:var(--primary)" id="kpiTotalLoan">—</div>
+          <div style="font-size:11px;color:var(--text-muted);margin-top:4px">Total Loan Volume</div>
+        </div>
+        <div class="card" style="text-align:center;padding:20px">
+          <div style="font-size:24px;font-weight:800;color:var(--primary)" id="kpiAvgLoan">—</div>
+          <div style="font-size:11px;color:var(--text-muted);margin-top:4px">Avg Loan Size</div>
+        </div>
+      </div>
+
+      <!-- Charts row 1 -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
+        <div class="card">
+          <div class="card-header"><h3>Loan Status</h3><span class="badge badge-info">$group</span></div>
+          <div id="chartLoanStatus" style="min-height:220px;display:flex;align-items:flex-end;gap:8px;padding:16px 0"></div>
+        </div>
+        <div class="card">
+          <div class="card-header"><h3>Loans by Purpose</h3><span class="badge badge-info">$group</span></div>
+          <div id="chartLoanPurpose" style="min-height:220px;display:flex;align-items:flex-end;gap:6px;padding:16px 0"></div>
+        </div>
+      </div>
+
+      <!-- Charts row 2 -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
+        <div class="card">
+          <div class="card-header"><h3>Credit Score Distribution</h3><span class="badge badge-info">$bucket</span></div>
+          <div id="chartRisk" style="min-height:220px;display:flex;align-items:flex-end;gap:8px;padding:16px 0"></div>
+        </div>
+        <div class="card">
+          <div class="card-header"><h3>Employment Breakdown</h3><span class="badge badge-info">$group</span></div>
+          <div id="chartEmployment" style="min-height:220px;display:flex;align-items:flex-end;gap:8px;padding:16px 0"></div>
+        </div>
+      </div>
+
+      <!-- Aggregation pipelines shown -->
+      <div class="card" style="background:#0d1117;border:1px solid #30363d">
+        <div class="card-header"><h3 style="color:#58a6ff">MongoDB Aggregation Pipelines Used</h3></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;font-family:monospace;font-size:11px;color:#c9d1d9">
+          <div style="background:#161b22;padding:12px;border-radius:6px">
+            <div style="color:#7ee787;margin-bottom:6px;font-weight:600">Loan Status</div>
+            <pre style="margin:0;white-space:pre-wrap">db.loan_applications.aggregate([
+  { $group: { _id: "$status",
+    count: { $sum: 1 },
+    total: { $sum: "$loan_amount" }}},
+  { $sort: { count: -1 }}
+])</pre>
+          </div>
+          <div style="background:#161b22;padding:12px;border-radius:6px">
+            <div style="color:#7ee787;margin-bottom:6px;font-weight:600">Credit Score Buckets</div>
+            <pre style="margin:0;white-space:pre-wrap">db.customers.aggregate([
+  { $bucket: {
+    groupBy: "$credit_score",
+    boundaries: [0, 400, 600, 700, 850],
+    output: { count: { $sum: 1 },
+      avg_income: { $avg: "$monthly_income" }}
+  }}
+])</pre>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Ask Your Data Tab -->
+    <div id="tab-askdata" class="hidden">
+      <h2 class="section-title">🤖 Ask Your Data</h2>
+      <p class="section-subtitle">Ask questions in natural language. <strong>Amazon Bedrock (Claude)</strong> translates your question into a <strong>MongoDB aggregation pipeline</strong>, executes it live, and returns the results.</p>
+
+      <div class="card">
+        <div class="form-group">
+          <label>Ask a question about the bank's data</label>
+          <div style="display:flex;gap:8px">
+            <input type="text" id="askDataInput" placeholder="e.g. What is the average loan amount by purpose?" style="flex:1;padding:10px 14px;border:1px solid var(--border);border-radius:8px;font-size:14px;background:var(--surface);color:var(--text-primary)" onkeydown="if(event.key==='Enter')askData()">
+            <button class="btn btn-primary" onclick="askData()" id="askDataBtn">
+              <span class="spinner hidden" id="askDataSpinner"></span>
+              Ask
+            </button>
+          </div>
+        </div>
+        <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px">
+          <span style="font-size:11px;color:var(--text-muted);margin-right:4px">Aggregation:</span>
+          <button class="ask-suggestion" onclick="askSuggestion(this)">How many loans are approved vs declined?</button>
+          <button class="ask-suggestion" onclick="askSuggestion(this)">What is the average credit score by employment type?</button>
+          <button class="ask-suggestion" onclick="askSuggestion(this)">Which customers have the highest monthly income?</button>
+          <button class="ask-suggestion" onclick="askSuggestion(this)">What is the total loan amount by status?</button>
+          <br>
+          <span style="font-size:11px;color:#00ed64;margin-right:4px">Vector Search:</span>
+          <button class="ask-suggestion" style="border-color:#00ed64;color:#00ed64" onclick="askSuggestion(this)">Find FAQs about opening a savings account</button>
+          <button class="ask-suggestion" style="border-color:#00ed64;color:#00ed64" onclick="askSuggestion(this)">Search for bank products related to home loans</button>
+          <button class="ask-suggestion" style="border-color:#00ed64;color:#00ed64" onclick="askSuggestion(this)">Find KYC documents similar to a Cambodian passport</button>
+        </div>
+      </div>
+
+      <div id="askDataResult" class="hidden" style="margin-top:16px"></div>
+      <div id="askDataHistory" style="margin-top:16px"></div>
+    </div>
+
+    <!-- Customer Intelligence Tab -->
+    <div id="tab-intel" class="hidden">
+      <h2 class="section-title">🎯 Customer Intelligence</h2>
+      <p class="section-subtitle">AI-powered customer 360 view. Uses <strong>MongoDB $lookup</strong> to aggregate all customer data, <strong>Atlas Vector Search</strong> to find matching products, and <strong>Amazon Bedrock (Claude)</strong> to generate personalised marketing campaigns.</p>
+
+      <div class="card">
+        <div style="display:flex;gap:12px;align-items:flex-end">
+          <div class="form-group" style="flex:1">
+            <label>Select Customer</label>
+            <select id="intelCustomerSelect" onchange="$('intelBtn').disabled=!this.value"><option value="">Loading customers...</option></select>
+          </div>
+          <button class="btn btn-primary" id="intelBtn" onclick="runCustomerIntel()" disabled style="white-space:nowrap">
+            <span class="spinner hidden" id="intelSpinner"></span>
+            Generate Intelligence
+          </button>
+        </div>
+      </div>
+
+      <div id="intelResult" class="hidden" style="margin-top:16px"></div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════ -->
+<!-- CHATBOT WIDGET                                      -->
+<!-- ═══════════════════════════════════════════════════ -->
+<button class="chatbot-fab" id="chatFab" onclick="toggleChat()">💬</button>
+
+<div class="chatbot-panel" id="chatPanel">
+  <div class="chat-header">
+    <div class="status-dot"></div>
+    Atlas Bank Assistant
+    <label style="margin-left:auto;font-size:11px;display:flex;align-items:center;gap:4px;cursor:pointer;opacity:.85">
+      <input type="checkbox" id="pipelineToggle" checked style="accent-color:var(--accent)"> Show AI Pipeline
+    </label>
+  </div>
+  <div class="chat-messages" id="chatMessages">
+    <div class="chat-msg bot">
+      Hi! I'm the Atlas Bank AI assistant. Ask me anything about our policies, services, rates, or account procedures. I can answer in <strong>English</strong> and <strong>Khmer</strong>.
+    </div>
+  </div>
+  <div class="chat-input">
+    <input type="text" id="chatInput" placeholder="Ask about loans, policies, accounts..." onkeydown="if(event.key==='Enter')sendChat()">
+    <button onclick="sendChat()" id="chatSendBtn">➤</button>
+  </div>
+</div>
+
+<script>
+/* ═══════════════════════════════════════════════════════
+   STATE
+   ═══════════════════════════════════════════════════════ */
+let allCustomers = [];
+let activeCustomer = null;   // full customer object
+let customerAccounts = [];
+let customerTransactions = [];
+let customerLoans = [];
+let currentPortal = 'customer';
+
+/* ═══════════════════════════════════════════════════════
+   HELPERS
+   ═══════════════════════════════════════════════════════ */
+const $ = id => document.getElementById(id);
+const fmtUSD = n => '$' + Number(n).toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2});
+const initials = name => (name || '').split(' ').map(w => w[0]).join('').toUpperCase().slice(0,2);
+const fmtDate = iso => {
+  if (!iso) return '';
+  const d = new Date(iso + 'T00:00:00');
+  return d.toLocaleDateString('en-GB', {day:'2-digit', month:'short'});
+};
+const acctLabel = type => ({savings:'Savings Account',current:'Current Account',fixed_deposit:'Fixed Deposit'}[type] || type);
+const catBadge = cat => {
+  const map = {income:'badge-success',shopping:'badge-warning',technology:'badge-info',transport:'badge-warning',
+    entertainment:'badge-info',savings:'badge-info',utilities:'badge-warning',cash:'badge-warning',
+    dining:'badge-warning',insurance:'badge-info',loan:'badge-danger',education:'badge-info',healthcare:'badge-warning'};
+  return map[cat] || 'badge-info';
+};
+const maskAcct = num => {
+  if (!num) return '';
+  const parts = num.split('-');
+  if (parts.length >= 4) return '•••• •••• ' + parts[parts.length-1];
+  return num;
+};
+
+/* ═══════════════════════════════════════════════════════
+   BOOTSTRAP — load customer list on page load
+   ═══════════════════════════════════════════════════════ */
+async function bootstrap() {
+  try {
+    const res = await fetch('/api/customers');
+    allCustomers = await res.json();
+  } catch (e) {
+    console.warn('Could not load customers', e);
+    $('dashGreeting').textContent = 'Could not connect to backend.';
+    return;
+  }
+
+  const picker = $('custPicker');
+  picker.innerHTML = '<option value="">— Select a customer —</option>';
+  allCustomers.forEach(c => {
+    const o = document.createElement('option');
+    o.value = c._id;
+    o.textContent = (c.full_name || c.name || c._id);
+    picker.appendChild(o);
+  });
+  picker.classList.remove('hidden');
+  picker.onchange = () => selectCustomer(picker.value);
+
+  if (allCustomers.length > 0) {
+    picker.value = allCustomers[0]._id;
+    selectCustomer(allCustomers[0]._id);
+  }
+}
+
+/* ═══════════════════════════════════════════════════════
+   SELECT A CUSTOMER — refresh all portal data
+   ═══════════════════════════════════════════════════════ */
+async function selectCustomer(oid) {
+  if (!oid) return;
+  activeCustomer = allCustomers.find(c => c._id === oid) || null;
+  if (!activeCustomer) return;
+
+  const name = activeCustomer.full_name || activeCustomer.name || 'Customer';
+  $('headerUserName').textContent = 'Welcome, ' + name.split(' ')[0];
+  $('headerAvatar').textContent = initials(name);
+  $('dashGreeting').textContent = '👋 Good morning, ' + name.split(' ')[0];
+
+  renderSettings();
+
+  try {
+    const [acctRes, txnRes, loanRes] = await Promise.all([
+      fetch('/api/accounts?customer_id=' + encodeURIComponent(oid)),
+      fetch('/api/transactions?customer_id=' + encodeURIComponent(oid) + '&limit=50'),
+      fetch('/api/loan-applications?customer_id=' + encodeURIComponent(oid)),
+    ]);
+    customerAccounts = await acctRes.json();
+    customerTransactions = await txnRes.json();
+    customerLoans = await loanRes.json();
+  } catch (e) {
+    console.warn('Error loading customer data', e);
+    customerAccounts = []; customerTransactions = []; customerLoans = [];
+  }
+
+  renderDashboard();
+  renderAccountsPage();
+  renderTransfersPage();
+  renderLoansPage();
+}
+
+/* ═══════════════════════════════════════════════════════
+   RENDER: Dashboard
+   ═══════════════════════════════════════════════════════ */
+function renderDashboard() {
+  const grid = $('dashAccounts');
+  grid.innerHTML = '';
+  customerAccounts.forEach(a => {
+    const extra = a.account_type === 'fixed_deposit' && a.maturity_date
+      ? 'Matures ' + fmtDate(a.maturity_date) + (a.interest_rate ? ' @ ' + a.interest_rate + '% p.a.' : '')
+      : 'Available Balance';
+    grid.innerHTML += '<div class="account-card ' + a.account_type + '">' +
+      '<div class="label">' + acctLabel(a.account_type) + '</div>' +
+      '<div class="number">' + maskAcct(a.account_number) + '</div>' +
+      '<div class="balance">' + fmtUSD(a.balance_usd) + '</div>' +
+      '<div class="balance-label">' + extra + '</div></div>';
+  });
+
+  const txnWrap = $('dashTransactions');
+  if (customerTransactions.length === 0) {
+    txnWrap.innerHTML = '<p style="padding:16px;color:var(--text-muted)">No recent transactions.</p>';
+    return;
+  }
+  let html = '<table><thead><tr><th>Date</th><th>Description</th><th>Category</th><th style="text-align:right">Amount</th></tr></thead><tbody>';
+  customerTransactions.slice(0, 15).forEach(t => {
+    const sign = t.type === 'credit' ? '+' : '–';
+    const cls = t.type === 'credit' ? 'amount-positive' : 'amount-negative';
+    html += '<tr><td>' + fmtDate(t.date) + '</td><td>' + t.description +
+      '</td><td><span class="badge ' + catBadge(t.category) + '">' + (t.category||'').charAt(0).toUpperCase() + (t.category||'').slice(1) +
+      '</span></td><td class="' + cls + '" style="text-align:right">' + sign + ' ' + fmtUSD(t.amount_usd) + '</td></tr>';
+  });
+  html += '</tbody></table>';
+  txnWrap.innerHTML = html;
+}
+
+/* ═══════════════════════════════════════════════════════
+   RENDER: Accounts page
+   ═══════════════════════════════════════════════════════ */
+function renderAccountsPage() {
+  const grid = $('acctGrid');
+  grid.innerHTML = '';
+  let total = 0;
+  customerAccounts.forEach(a => {
+    total += a.balance_usd;
+    let sublabel = acctLabel(a.account_type);
+    if (a.account_type === 'fixed_deposit' && a.interest_rate) {
+      sublabel += ' — ' + (a.interest_rate) + '% p.a.';
+    }
+    grid.innerHTML += '<div class="account-card ' + a.account_type + '">' +
+      '<div class="label">' + sublabel + '</div>' +
+      '<div class="number">' + (a.account_number || '') + '</div>' +
+      '<div class="balance">' + fmtUSD(a.balance_usd) + '</div>' +
+      '<div class="balance-label">' + (a.account_type === 'fixed_deposit' && a.maturity_date ? 'Matures ' + fmtDate(a.maturity_date) : 'Available Balance') + '</div></div>';
+  });
+  $('acctTotalBal').textContent = fmtUSD(total);
+  $('acctTotalCount').textContent = 'Across ' + customerAccounts.length + ' account' + (customerAccounts.length !== 1 ? 's' : '');
+}
+
+/* ═══════════════════════════════════════════════════════
+   RENDER: Transfers page — populate From Account
+   ═══════════════════════════════════════════════════════ */
+function renderTransfersPage() {
+  const sel = $('xferFromAcct');
+  sel.innerHTML = '';
+  customerAccounts.filter(a => a.account_type !== 'fixed_deposit').forEach(a => {
+    const o = document.createElement('option');
+    o.value = a._id;
+    o.textContent = acctLabel(a.account_type) + ' ' + maskAcct(a.account_number) + ' — ' + fmtUSD(a.balance_usd);
+    sel.appendChild(o);
+  });
+  if (sel.options.length === 0) sel.innerHTML = '<option>No accounts available</option>';
+}
+
+/* ═══════════════════════════════════════════════════════
+   RENDER: Loans page
+   ═══════════════════════════════════════════════════════ */
+function renderLoansPage() {
+  const container = $('loansContainer');
+  if (customerLoans.length === 0) {
+    container.innerHTML = '<div class="card" style="text-align:center;padding:40px;color:var(--text-muted)"><p>No active loans found for this customer.</p></div>';
+    return;
+  }
+  let html = '';
+  customerLoans.forEach(l => {
+    const statusBadge = l.status === 'approved' ? 'badge-success' : l.status === 'declined' ? 'badge-danger' : 'badge-warning';
+    html += '<div class="card"><div class="card-header"><h3>' + ((l.purpose||'Loan').charAt(0).toUpperCase() + (l.purpose||'').slice(1)) +
+      ' Loan</h3><span class="badge ' + statusBadge + '">' + (l.status||'pending').toUpperCase() + '</span></div>' +
+      '<div class="metric-row">' +
+      '<div class="metric"><div class="metric-value">' + fmtUSD(l.loan_amount || l.amount_usd || 0) + '</div><div class="metric-label">Amount</div></div>' +
+      '<div class="metric"><div class="metric-value">' + fmtUSD(l.monthly_payment || l.monthly_payment_usd || 0) + '</div><div class="metric-label">Monthly Payment</div></div>' +
+      '<div class="metric"><div class="metric-value">' + (l.requested_rate || '—') + '%</div><div class="metric-label">Interest Rate</div></div>' +
+      '<div class="metric"><div class="metric-value">' + (l.term_months || '—') + ' mo</div><div class="metric-label">Term</div></div>' +
+      '</div></div>';
+  });
+  container.innerHTML = html;
+}
+
+/* ═══════════════════════════════════════════════════════
+   LOAN: Document Upload + Bedrock Claude Extraction
+   ═══════════════════════════════════════════════════════ */
+const ALLOWED_EXTENSIONS = ['pdf', 'png', 'jpg', 'jpeg', 'webp'];
+
+async function handleLoanUpload(file) {
+  if (!file) return;
+  const ext = file.name.split('.').pop().toLowerCase();
+  if (!ALLOWED_EXTENSIONS.includes(ext)) {
+    alert('Unsupported file type. Please upload a PDF, PNG, or JPG.');
+    return;
+  }
+  if (!activeCustomer) {
+    alert('Please select a customer first.');
+    return;
+  }
+
+  const resultDiv = $('loanOcrResult');
+  resultDiv.classList.remove('hidden');
+  resultDiv.innerHTML = '<div style="text-align:center;padding:24px"><span class="spinner"></span><div style="margin-top:8px;font-size:13px;color:var(--text-muted)">Sending <strong>' + escapeHtml(file.name) + '</strong> to Amazon Bedrock (Claude) for intelligent extraction...</div><div style="font-size:11px;color:var(--text-muted);margin-top:4px">This uses the same Lambda + API Gateway as the chatbot</div></div>';
+
+  const dropZone = $('loanDropZone');
+  dropZone.style.opacity = '0.5';
+  dropZone.style.pointerEvents = 'none';
+
+  try {
+    const formData = new FormData();
+    formData.append('file', file);
+    const custId = activeCustomer._id || activeCustomer.id;
+    const res = await fetch('/api/loan-application/upload?customer_id=' + encodeURIComponent(custId), {
+      method: 'POST',
+      body: formData,
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ detail: res.statusText }));
+      throw new Error(err.detail || 'Upload failed');
+    }
+    const data = await res.json();
+    renderExtractionResult(data, file.name);
+  } catch (e) {
+    resultDiv.innerHTML = '<div class="card" style="border-color:#ef4444;background:#fef2f2;padding:20px"><strong style="color:#dc2626">Error:</strong> <span style="color:#7f1d1d">' + escapeHtml(e.message) + '</span></div>';
+  } finally {
+    dropZone.style.opacity = '1';
+    dropZone.style.pointerEvents = 'auto';
+  }
+}
+
+function renderExtractionResult(data, filename) {
+  const r = $('loanOcrResult');
+  let html = '';
+
+  // Pipeline evidence panel
+  html += '<div style="background:#0d1117;border:1px solid #30363d;border-radius:10px;padding:20px;margin-bottom:16px">';
+  html += '<div style="color:#58a6ff;font-weight:700;font-size:13px;margin-bottom:12px">🔬 Document Intelligence Pipeline</div>';
+
+  // Step 1: Upload
+  html += '<div style="margin-bottom:10px;padding:10px;background:#161b22;border-radius:6px">';
+  html += '<div style="color:#8b949e;font-size:11px;font-weight:600;margin-bottom:4px">① Document Upload</div>';
+  html += '<div style="color:#c9d1d9;font-size:12px">File: <strong>' + escapeHtml(filename) + '</strong> | Type: <strong>' + (data.content_type || '—') + '</strong></div>';
+  html += '</div>';
+
+  // Step 2: Bedrock extraction
+  html += '<div style="margin-bottom:10px;padding:10px;background:#161b22;border-radius:6px">';
+  html += '<div style="color:#8b949e;font-size:11px;font-weight:600;margin-bottom:4px">② Intelligent Extraction (Amazon Bedrock — Claude)</div>';
+  html += '<div style="color:#c9d1d9;font-size:12px">';
+  html += 'Model: <strong>' + (data.bedrock_model || 'Claude') + '</strong> | ';
+  html += 'Latency: <strong>' + data.extraction_ms + 'ms</strong>';
+  if (data.usage) {
+    html += ' | Tokens: <strong>' + (data.usage.input_tokens || 0).toLocaleString() + ' in / ' + (data.usage.output_tokens || 0).toLocaleString() + ' out</strong>';
+  }
+  html += '</div>';
+  html += '<div style="color:#7ee787;font-size:11px;margin-top:4px">Detected document type: <strong>' + (data.document_type || 'unknown') + '</strong> | Confidence: <strong>' + (data.confidence || '—') + '</strong></div>';
+  html += '</div>';
+
+  // Step 3: MongoDB storage
+  html += '<div style="margin-bottom:10px;padding:10px;background:#161b22;border-radius:6px">';
+  html += '<div style="color:#8b949e;font-size:11px;font-weight:600;margin-bottom:4px">③ Stored in MongoDB Atlas</div>';
+  html += '<div style="color:#c9d1d9;font-size:12px">Collection: <strong>' + data.mongodb_collection + '</strong> | Document ID: <code style="background:#0d1117;padding:2px 6px;border-radius:3px;font-size:11px">' + data.mongodb_document_id + '</code></div>';
+  html += '</div>';
+
+  // Step 4: Vectorize placeholder
+  html += '<div id="vectorizeStep" style="padding:10px;background:#161b22;border-radius:6px;border:1px dashed #30363d">';
+  html += '<div style="color:#8b949e;font-size:11px;font-weight:600;margin-bottom:4px">④ Vectorize with Voyage AI <span style="color:#f0883e;font-weight:400">(pending)</span></div>';
+  html += '<div style="color:#8b949e;font-size:12px">Generate embedding vector for semantic search — click the button below</div>';
+  html += '</div>';
+
+  html += '</div>';
+
+  // Summary
+  if (data.summary) {
+    html += '<div class="card" style="border-left:3px solid var(--accent);padding:16px"><div style="font-size:12px;color:var(--text-muted);margin-bottom:4px;font-weight:600">AI Summary</div><div style="font-size:14px;color:var(--text-primary)">' + escapeHtml(data.summary) + '</div></div>';
+  }
+
+  // Extracted fields
+  const fields = data.extracted_fields || {};
+  const fieldKeys = Object.keys(fields);
+  if (fieldKeys.length > 0) {
+    html += '<div class="card"><div class="card-header"><h3>Extracted Fields</h3><span class="badge badge-success">' + fieldKeys.length + ' FIELDS</span></div>';
+    html += '<table style="width:100%;font-size:12px;border-collapse:collapse">';
+    html += '<tr style="border-bottom:2px solid var(--border)"><th style="text-align:left;padding:8px;color:var(--text-muted);width:35%">Field</th><th style="text-align:left;padding:8px;color:var(--text-muted)">Value</th></tr>';
+    fieldKeys.forEach(k => {
+      const val = typeof fields[k] === 'object' ? JSON.stringify(fields[k]) : String(fields[k]);
+      html += '<tr style="border-bottom:1px solid var(--border)"><td style="padding:8px;font-weight:600;color:var(--accent)">' + escapeHtml(k.replace(/_/g, ' ')) + '</td><td style="padding:8px;color:var(--text-primary)">' + escapeHtml(val) + '</td></tr>';
+    });
+    html += '</table></div>';
+  }
+
+  // Full text preview
+  if (data.full_text) {
+    html += '<div class="card"><div class="card-header"><h3>Full Extracted Text</h3><span class="badge badge-success">EXTRACTION COMPLETE</span></div>';
+    html += '<div style="max-height:300px;overflow-y:auto;padding:16px;background:var(--bg-tertiary);border-radius:8px;font-family:monospace;font-size:12px;line-height:1.7;white-space:pre-wrap;color:var(--text-primary)">';
+    html += escapeHtml(data.full_text || '(no text extracted)');
+    html += '</div></div>';
+  }
+
+  // Vectorize button
+  html += '<div style="text-align:center;margin-top:16px">';
+  html += '<button onclick="handleVectorize(\'' + data.mongodb_document_id + '\')" id="vectorizeBtn" style="background:linear-gradient(135deg,#00684A,#00ED64);color:#001e2b;border:none;padding:14px 32px;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;transition:all .2s;box-shadow:0 2px 8px rgba(0,237,100,.3)">';
+  html += '🧬 Vectorize & Store Embedding in MongoDB Atlas';
+  html += '</button>';
+  html += '<div style="font-size:11px;color:var(--text-muted);margin-top:6px">Generates a 1024-dim vector using Voyage AI and stores it alongside the document</div>';
+  html += '</div>';
+
+  r.innerHTML = html;
+}
+
+async function handleVectorize(docId) {
+  const btn = $('vectorizeBtn');
+  const step = $('vectorizeStep');
+  btn.disabled = true;
+  btn.style.opacity = '0.6';
+  btn.innerHTML = '<span class="spinner" style="width:14px;height:14px;border-width:2px;margin-right:8px;vertical-align:middle"></span> Generating embedding with Voyage AI...';
+
+  try {
+    const res = await fetch('/api/loan-application/vectorize?document_id=' + encodeURIComponent(docId), { method: 'POST' });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ detail: res.statusText }));
+      throw new Error(err.detail || 'Vectorization failed');
+    }
+    const data = await res.json();
+
+    // Update step 4 in the pipeline panel
+    step.style.borderColor = '#7ee787';
+    step.style.border = '1px solid #238636';
+    step.innerHTML = '<div style="color:#7ee787;font-size:11px;font-weight:600;margin-bottom:4px">④ Vectorized with Voyage AI <span style="color:#7ee787">✓</span></div>'
+      + '<div style="color:#c9d1d9;font-size:12px">'
+      + 'Model: <strong>' + data.embedding_model + '</strong> | '
+      + 'Dimensions: <strong>' + data.dimensions + '</strong> | '
+      + 'Latency: <strong>' + data.embed_latency_ms + 'ms</strong> | '
+      + 'Text: <strong>' + data.text_length.toLocaleString() + ' chars</strong>'
+      + '</div>';
+
+    // Replace button with success
+    btn.parentElement.innerHTML = '<div style="background:#0d1117;border:1px solid #238636;border-radius:10px;padding:16px;text-align:center">'
+      + '<div style="color:#7ee787;font-size:14px;font-weight:700;margin-bottom:6px">✅ Document Vectorized & Stored</div>'
+      + '<div style="color:#c9d1d9;font-size:12px">'
+      + '<strong>' + data.dimensions + '-dimensional</strong> embedding generated by <strong>' + data.embedding_model + '</strong> in <strong>' + data.embed_latency_ms + 'ms</strong>'
+      + '</div>'
+      + '<div style="color:#8b949e;font-size:11px;margin-top:8px">'
+      + 'This document is now ready for <strong>MongoDB Atlas Vector Search</strong> — enabling semantic similarity queries across all loan support documents.'
+      + '</div>'
+      + '<div style="margin-top:10px;padding:8px;background:#161b22;border-radius:6px;font-family:monospace;font-size:11px;color:#8b949e;text-align:left;overflow-x:auto">'
+      + 'db.loan_support_docs.aggregate([{<br>'
+      + '&nbsp;&nbsp;<span style="color:#f0883e">$vectorSearch</span>: {<br>'
+      + '&nbsp;&nbsp;&nbsp;&nbsp;index: <span style="color:#a5d6ff">"loan_docs_vector_index"</span>,<br>'
+      + '&nbsp;&nbsp;&nbsp;&nbsp;path: <span style="color:#a5d6ff">"embedding"</span>,<br>'
+      + '&nbsp;&nbsp;&nbsp;&nbsp;queryVector: <span style="color:#7ee787">[...1024 floats...]</span>,<br>'
+      + '&nbsp;&nbsp;&nbsp;&nbsp;numCandidates: <span style="color:#79c0ff">100</span>,<br>'
+      + '&nbsp;&nbsp;&nbsp;&nbsp;limit: <span style="color:#79c0ff">5</span><br>'
+      + '&nbsp;&nbsp;}<br>}])'
+      + '</div></div>';
+  } catch (e) {
+    btn.disabled = false;
+    btn.style.opacity = '1';
+    btn.innerHTML = '🧬 Vectorize & Store Embedding in MongoDB Atlas';
+    step.innerHTML = '<div style="color:#f85149;font-size:11px;font-weight:600;margin-bottom:4px">④ Vectorization Failed</div>'
+      + '<div style="color:#f85149;font-size:12px">' + escapeHtml(e.message) + '</div>';
+  }
+}
+
+function escapeHtml(str) {
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+/* ═══════════════════════════════════════════════════════
+   ANALYTICS DASHBOARD
+   ═══════════════════════════════════════════════════════ */
+const BAR_COLORS = ['#2563eb','#00ed64','#f59e0b','#ef4444','#8b5cf6','#06b6d4','#ec4899','#84cc16','#f97316','#6366f1'];
+let analyticsLoaded = false;
+
+async function loadAnalytics() {
+  if (analyticsLoaded) return;
+  try {
+    const res = await fetch('/api/analytics');
+    if (!res.ok) throw new Error('Failed to load analytics');
+    const data = await res.json();
+    analyticsLoaded = true;
+    renderAnalytics(data);
+  } catch (e) {
+    console.error('Analytics error:', e);
+  }
+}
+
+function renderAnalytics(data) {
+  const k = data.kpis;
+  $('kpiCustomers').textContent = k.total_customers.toLocaleString();
+  $('kpiLoans').textContent = k.total_loans.toLocaleString();
+  $('kpiKyc').textContent = k.total_kyc_documents.toLocaleString();
+  $('kpiTotalLoan').textContent = '$' + Math.round(k.total_loan_amount).toLocaleString();
+  $('kpiAvgLoan').textContent = '$' + Math.round(k.avg_loan_amount).toLocaleString();
+
+  renderBarChart('chartLoanStatus', data.loan_status, '_id', 'count', d => (d._id || 'unknown').toUpperCase());
+  renderBarChart('chartLoanPurpose', data.loan_by_purpose, '_id', 'count', d => d._id || 'other');
+  renderBarChart('chartRisk', data.risk_distribution, '_id', 'count', d => {
+    const b = d._id;
+    if (b === 0) return '0-399';
+    if (b === 400) return '400-599';
+    if (b === 600) return '600-699';
+    if (b === 700) return '700-850';
+    return String(b);
+  });
+  renderBarChart('chartEmployment', data.employment, '_id', 'count', d => (d._id || 'unknown').replace(/_/g,' '));
+}
+
+function renderBarChart(containerId, data, labelKey, valueKey, labelFn) {
+  const el = $(containerId);
+  if (!data || !data.length) { el.innerHTML = '<div style="color:var(--text-muted);font-size:13px;padding:20px;text-align:center">No data</div>'; return; }
+  const maxVal = Math.max(...data.map(d => d[valueKey] || 0));
+  el.innerHTML = data.map((d, i) => {
+    const val = d[valueKey] || 0;
+    const pct = maxVal > 0 ? (val / maxVal * 100) : 0;
+    const label = labelFn ? labelFn(d) : (d[labelKey] || '');
+    const color = BAR_COLORS[i % BAR_COLORS.length];
+    return '<div style="flex:1;display:flex;flex-direction:column;align-items:center;min-width:0">'
+      + '<div style="font-size:12px;font-weight:700;color:var(--text-primary);margin-bottom:4px">' + val.toLocaleString() + '</div>'
+      + '<div style="width:100%;max-width:60px;height:' + Math.max(pct * 1.6, 8) + 'px;background:' + color + ';border-radius:4px 4px 0 0;transition:height .5s"></div>'
+      + '<div style="font-size:10px;color:var(--text-muted);margin-top:6px;text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:80px" title="' + escapeHtml(label) + '">' + escapeHtml(label) + '</div>'
+      + '</div>';
+  }).join('');
+}
+
+/* ═══════════════════════════════════════════════════════
+   ASK YOUR DATA: NL → MongoDB Aggregation
+   ═══════════════════════════════════════════════════════ */
+let askHistory = [];
+
+function askSuggestion(btn) {
+  $('askDataInput').value = btn.textContent;
+  askData();
+}
+
+async function askData() {
+  const input = $('askDataInput');
+  const q = input.value.trim();
+  if (!q) return;
+
+  const btn = $('askDataBtn');
+  const spinner = $('askDataSpinner');
+  const resultDiv = $('askDataResult');
+  btn.disabled = true;
+  spinner.classList.remove('hidden');
+  resultDiv.classList.remove('hidden');
+  resultDiv.innerHTML = '<div style="text-align:center;padding:24px"><span class="spinner"></span><div style="margin-top:8px;font-size:13px;color:var(--text-muted)">Claude is generating a MongoDB aggregation pipeline...</div></div>';
+
+  try {
+    const res = await fetch('/api/ask-data?q=' + encodeURIComponent(q), { method: 'POST' });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ detail: res.statusText }));
+      throw new Error(err.detail || 'Request failed');
+    }
+    const data = await res.json();
+    renderAskDataResult(data);
+    askHistory.unshift(data);
+    renderAskDataHistory();
+  } catch (e) {
+    resultDiv.innerHTML = '<div class="card" style="border-color:#ef4444;background:#fef2f2;padding:20px"><strong style="color:#dc2626">Error:</strong> <span style="color:#7f1d1d">' + escapeHtml(e.message) + '</span></div>';
+  } finally {
+    btn.disabled = false;
+    spinner.classList.add('hidden');
+  }
+}
+
+function renderAskDataResult(data) {
+  const r = $('askDataResult');
+  let html = '';
+
+  if (data.error) {
+    html += '<div class="card" style="border-color:#ef4444;padding:16px"><strong style="color:#dc2626">Error:</strong> ' + escapeHtml(data.error) + '</div>';
+    if (data.raw_response) {
+      html += '<div class="card" style="background:#0d1117;border:1px solid #30363d;padding:16px"><pre style="margin:0;font-size:11px;color:#c9d1d9;white-space:pre-wrap">' + escapeHtml(data.raw_response) + '</pre></div>';
+    }
+    r.innerHTML = html;
+    return;
+  }
+
+  // Pipeline transparency
+  const isVectorSearch = !!data.vector_search;
+  html += '<div style="background:#0d1117;border:1px solid ' + (isVectorSearch ? '#238636' : '#30363d') + ';border-radius:10px;padding:20px;margin-bottom:16px">';
+  html += '<div style="color:#58a6ff;font-weight:700;font-size:13px;margin-bottom:12px">🔬 Query Pipeline';
+  if (isVectorSearch) html += ' <span style="background:#238636;color:#fff;padding:2px 8px;border-radius:10px;font-size:10px;margin-left:8px">VECTOR SEARCH</span>';
+  html += '</div>';
+
+  // Step 1: Claude generates the query
+  let stepNum = 1;
+  html += '<div style="margin-bottom:10px;padding:10px;background:#161b22;border-radius:6px">';
+  html += '<div style="color:#8b949e;font-size:11px;font-weight:600;margin-bottom:4px">① Natural Language → MongoDB ' + (isVectorSearch ? '$vectorSearch + Aggregation' : 'Aggregation') + ' (Claude)</div>';
+  html += '<div style="color:#c9d1d9;font-size:12px">Latency: <strong>' + data.llm_latency_ms + 'ms</strong>';
+  if (data.usage) html += ' | Tokens: <strong>' + (data.usage.input_tokens||0) + ' in / ' + (data.usage.output_tokens||0) + ' out</strong>';
+  html += '</div></div>';
+
+  // Step 2 (vector search only): Embedding generation
+  if (isVectorSearch) {
+    const vs = data.vector_search;
+    html += '<div style="margin-bottom:10px;padding:10px;background:#161b22;border-radius:6px;border-left:3px solid #00ed64">';
+    html += '<div style="color:#00ed64;font-size:11px;font-weight:600;margin-bottom:4px">② Generate Embedding (Voyage AI)</div>';
+    html += '<div style="color:#c9d1d9;font-size:12px">';
+    html += 'Search text: <strong>"' + escapeHtml(vs.search_text || '') + '"</strong><br>';
+    html += 'Model: <strong>' + (vs.embedding_model || '') + '</strong> | Dimensions: <strong>' + (vs.dimensions || 0) + '</strong> | Latency: <strong>' + (vs.embed_latency_ms || 0) + 'ms</strong>';
+    html += '</div></div>';
+
+    html += '<div style="margin-bottom:10px;padding:10px;background:#161b22;border-radius:6px;border-left:3px solid #00ed64">';
+    html += '<div style="color:#00ed64;font-size:11px;font-weight:600;margin-bottom:4px">③ $vectorSearch on MongoDB Atlas</div>';
+    html += '<div style="color:#c9d1d9;font-size:12px">';
+    html += 'Index: <strong>' + (vs.index || '') + '</strong> | Path: <strong>' + (vs.path || '') + '</strong> | Collection: <strong>' + (data.generated_pipeline?.collection || '') + '</strong> | Query latency: <strong>' + (data.query_latency_ms||0) + 'ms</strong> | Rows: <strong>' + (data.result_count||0) + '</strong>';
+    html += '</div></div>';
+  } else {
+    html += '<div style="margin-bottom:10px;padding:10px;background:#161b22;border-radius:6px">';
+    html += '<div style="color:#8b949e;font-size:11px;font-weight:600;margin-bottom:4px">② Execute on MongoDB Atlas</div>';
+    html += '<div style="color:#c9d1d9;font-size:12px">Collection: <strong>' + (data.generated_pipeline?.collection||'') + '</strong> | Latency: <strong>' + (data.query_latency_ms||0) + 'ms</strong> | Rows: <strong>' + (data.result_count||0) + '</strong></div>';
+    html += '</div>';
+  }
+
+  // Show generated pipeline
+  html += '<div style="padding:10px;background:#161b22;border-radius:6px">';
+  html += '<div style="color:#7ee787;font-size:11px;font-weight:600;margin-bottom:6px">Generated Aggregation Pipeline</div>';
+  html += '<pre style="margin:0;font-size:11px;color:#c9d1d9;white-space:pre-wrap;overflow-x:auto">db.' + (data.generated_pipeline?.collection||'') + '.aggregate(\n' + JSON.stringify(data.generated_pipeline?.pipeline||[], null, 2) + '\n)</pre>';
+  html += '</div></div>';
+
+  // Results table
+  const results = data.results || [];
+  if (results.length > 0) {
+    const allKeys = [];
+    const HIDE_KEYS = ['_id','embedding','description_embedding','embedding_model','pdf_data','pdf_data_b64'];
+    results.forEach(row => { Object.keys(row).forEach(k => { if (!allKeys.includes(k) && !HIDE_KEYS.includes(k)) allKeys.push(k); }); });
+    html += '<div class="card"><div class="card-header"><h3>Results</h3><span class="badge badge-success">' + data.result_count + ' ROWS</span></div>';
+    html += '<div style="overflow-x:auto"><table style="width:100%;font-size:12px;border-collapse:collapse">';
+    html += '<tr>' + allKeys.map(k => '<th style="text-align:left;padding:8px;border-bottom:2px solid var(--border);color:var(--text-muted);white-space:nowrap">' + escapeHtml(k) + '</th>').join('') + '</tr>';
+    results.slice(0, 25).forEach(row => {
+      html += '<tr>' + allKeys.map(k => {
+        let v = row[k];
+        if (v === null || v === undefined) v = '—';
+        else if (typeof v === 'object') v = JSON.stringify(v);
+        else if (typeof v === 'number') v = Number.isInteger(v) ? v.toLocaleString() : v.toLocaleString(undefined, {maximumFractionDigits:2});
+        else v = String(v);
+        return '<td style="padding:8px;border-bottom:1px solid var(--border);color:var(--text-primary)">' + escapeHtml(String(v)) + '</td>';
+      }).join('') + '</tr>';
+    });
+    html += '</table></div></div>';
+  }
+
+  r.innerHTML = html;
+}
+
+function renderAskDataHistory() {
+  const el = $('askDataHistory');
+  if (askHistory.length <= 1) { el.innerHTML = ''; return; }
+  let html = '<div class="card"><div class="card-header"><h3>Previous Queries</h3></div>';
+  html += '<div style="display:flex;flex-direction:column;gap:8px">';
+  askHistory.slice(1, 8).forEach(item => {
+    const ok = !item.error;
+    html += '<div style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:var(--bg-tertiary);border-radius:6px;cursor:pointer" onclick="$(' + "'askDataInput'" + ').value=' + JSON.stringify(item.query) + ';askData()">';
+    html += '<span style="font-size:14px">' + (ok ? '✅' : '❌') + '</span>';
+    html += '<div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:600;color:var(--text-primary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + escapeHtml(item.query) + '</div>';
+    html += '<div style="font-size:11px;color:var(--text-muted)">' + (ok ? (item.result_count||0) + ' rows | ' + (item.llm_latency_ms||0) + 'ms' : 'Error') + '</div></div></div>';
+  });
+  html += '</div></div>';
+  el.innerHTML = html;
+}
+
+/* ═══════════════════════════════════════════════════════
+   CUSTOMER INTELLIGENCE
+   ═══════════════════════════════════════════════════════ */
+async function runCustomerIntel() {
+  const cid = $('intelCustomerSelect').value;
+  if (!cid) return;
+  const btn = $('intelBtn');
+  const sp = $('intelSpinner');
+  const r = $('intelResult');
+  btn.disabled = true;
+  sp.classList.remove('hidden');
+  r.classList.remove('hidden');
+  r.innerHTML = '<div style="text-align:center;padding:40px"><span class="spinner"></span><div style="margin-top:12px;font-size:13px;color:var(--text-muted)">Building Customer 360 with <strong>$lookup</strong>, finding products with <strong>$vectorSearch</strong>, generating marketing intelligence with <strong>Claude</strong>...</div></div>';
+
+  try {
+    const res = await fetch('/api/customer-intelligence?customer_id=' + encodeURIComponent(cid));
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({detail: res.statusText}));
+      throw new Error(err.detail || 'Request failed');
+    }
+    const data = await res.json();
+    renderIntelResult(data);
+  } catch (e) {
+    r.innerHTML = '<div class="card" style="border-color:#ef4444;background:#fef2f2;padding:20px"><strong style="color:#dc2626">Error:</strong> ' + escapeHtml(e.message) + '</div>';
+  } finally {
+    btn.disabled = false;
+    sp.classList.add('hidden');
+  }
+}
+
+function renderIntelResult(data) {
+  const r = $('intelResult');
+  const c = data.customer || {};
+  const intel = data.intelligence || {};
+  const prods = data.matched_products || [];
+  const pipe = data.pipeline || {};
+  let html = '';
+
+  // ── Pipeline transparency ──
+  html += '<div style="background:#0d1117;border:1px solid #30363d;border-radius:10px;padding:20px;margin-bottom:16px">';
+  html += '<div style="color:#58a6ff;font-weight:700;font-size:13px;margin-bottom:12px">🔬 Intelligence Pipeline</div>';
+  html += '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">';
+
+  html += '<div style="padding:10px;background:#161b22;border-radius:6px">';
+  html += '<div style="color:#8b949e;font-size:10px;font-weight:600;margin-bottom:4px">① Customer 360 ($lookup)</div>';
+  html += '<div style="color:#c9d1d9;font-size:11px">5 collections joined | <strong>' + pipe.aggregation_ms + 'ms</strong></div>';
+  html += '</div>';
+
+  html += '<div style="padding:10px;background:#161b22;border-radius:6px;border-left:3px solid #00ed64">';
+  html += '<div style="color:#00ed64;font-size:10px;font-weight:600;margin-bottom:4px">② Product Match ($vectorSearch)</div>';
+  html += '<div style="color:#c9d1d9;font-size:11px">Embed: <strong>' + pipe.embed_ms + 'ms</strong> | Search: <strong>' + pipe.vector_search_ms + 'ms</strong></div>';
+  html += '</div>';
+
+  html += '<div style="padding:10px;background:#161b22;border-radius:6px">';
+  html += '<div style="color:#f0883e;font-size:10px;font-weight:600;margin-bottom:4px">③ Marketing AI (Claude)</div>';
+  html += '<div style="color:#c9d1d9;font-size:11px"><strong>' + pipe.llm_ms + 'ms</strong>';
+  if (pipe.usage) html += ' | ' + (pipe.usage.input_tokens||0) + '/' + (pipe.usage.output_tokens||0) + ' tokens';
+  html += '</div></div>';
+
+  html += '</div></div>';
+
+  // ── Customer profile + segment ──
+  const tierColors = {platinum:'#e5e7eb',gold:'#fbbf24',silver:'#9ca3af',bronze:'#d97706'};
+  const tierColor = tierColors[intel.lifetime_value_tier] || '#6b7280';
+  html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">';
+
+  // Left: profile card
+  html += '<div class="card">';
+  html += '<div class="card-header"><h3>' + escapeHtml(c.name) + '</h3></div>';
+  html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:12px">';
+  html += '<div><span style="color:var(--text-muted)">Location:</span> <strong>' + escapeHtml(c.city + ', ' + c.country) + '</strong></div>';
+  html += '<div><span style="color:var(--text-muted)">Employment:</span> <strong>' + escapeHtml((c.employment||'').replace(/_/g,' ')) + '</strong></div>';
+  html += '<div><span style="color:var(--text-muted)">Income:</span> <strong>$' + (c.monthly_income||0).toLocaleString() + '/mo</strong></div>';
+  html += '<div><span style="color:var(--text-muted)">Credit Score:</span> <strong>' + (c.credit_score||0) + '</strong></div>';
+  html += '<div><span style="color:var(--text-muted)">Total Balance:</span> <strong>$' + (c.total_balance||0).toLocaleString() + '</strong></div>';
+  html += '<div><span style="color:var(--text-muted)">Loans:</span> <strong>' + (c.num_loans||0) + ' ($' + (c.total_loan_amount||0).toLocaleString() + ')</strong></div>';
+  html += '<div><span style="color:var(--text-muted)">Account Age:</span> <strong>' + (c.account_age_months||0) + ' months</strong></div>';
+  html += '<div><span style="color:var(--text-muted)">Payment History:</span> <strong>' + escapeHtml(c.payment_history||'') + '</strong></div>';
+  if (c.financial_goals) html += '<div style="grid-column:1/-1"><span style="color:var(--text-muted)">Goals:</span> <strong>' + escapeHtml(c.financial_goals) + '</strong></div>';
+  html += '</div></div>';
+
+  // Right: segment card
+  html += '<div class="card" style="border-left:4px solid ' + tierColor + '">';
+  html += '<div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">';
+  html += '<div style="font-size:28px">🎯</div>';
+  html += '<div><div style="font-size:18px;font-weight:800;color:var(--text-primary)">' + escapeHtml(intel.segment || '') + '</div>';
+  html += '<div style="font-size:12px;color:var(--text-muted)">' + escapeHtml(intel.segment_description || '') + '</div></div>';
+  html += '</div>';
+  html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">';
+  html += '<div style="background:var(--bg-tertiary);border-radius:6px;padding:10px;text-align:center"><div style="font-size:11px;color:var(--text-muted)">Lifetime Value</div><div style="font-size:16px;font-weight:700;color:' + tierColor + ';text-transform:uppercase">' + (intel.lifetime_value_tier||'—') + '</div></div>';
+  html += '<div style="background:var(--bg-tertiary);border-radius:6px;padding:10px;text-align:center"><div style="font-size:11px;color:var(--text-muted)">Churn Risk</div><div style="font-size:16px;font-weight:700;color:' + ({low:'#22c55e',medium:'#f59e0b',high:'#ef4444'}[intel.risk_of_churn]||'#6b7280') + '">' + (intel.risk_of_churn||'—').toUpperCase() + '</div></div>';
+  html += '</div>';
+
+  if (intel.key_insights && intel.key_insights.length) {
+    html += '<div style="margin-top:12px"><div style="font-size:11px;color:var(--text-muted);font-weight:600;margin-bottom:6px">Key Insights</div>';
+    intel.key_insights.forEach(ins => {
+      html += '<div style="font-size:12px;color:var(--text-primary);padding:4px 0;border-bottom:1px solid var(--border)">• ' + escapeHtml(ins) + '</div>';
+    });
+    html += '</div>';
+  }
+  html += '</div></div>';
+
+  // ── Next Best Action ──
+  if (intel.next_best_action) {
+    html += '<div class="card" style="border-left:4px solid var(--accent);padding:16px;margin-bottom:16px">';
+    html += '<div style="font-size:11px;color:var(--accent);font-weight:700;margin-bottom:4px">⚡ NEXT BEST ACTION</div>';
+    html += '<div style="font-size:15px;font-weight:600;color:var(--text-primary)">' + escapeHtml(intel.next_best_action) + '</div>';
+    html += '</div>';
+  }
+
+  // ── Campaigns ──
+  const campaigns = intel.campaigns || [];
+  if (campaigns.length) {
+    html += '<div class="card"><div class="card-header"><h3>Personalised Marketing Campaigns</h3><span class="badge badge-info">AI GENERATED</span></div>';
+    html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">';
+    const channelIcons = {email:'📧',sms:'📱',in_app:'💻',branch:'🏦'};
+    const convColors = {high:'#22c55e',medium:'#f59e0b',low:'#ef4444'};
+    campaigns.forEach(camp => {
+      html += '<div style="border:1px solid var(--border);border-radius:8px;padding:16px">';
+      html += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">';
+      html += '<span style="font-size:20px">' + (channelIcons[camp.channel]||'📢') + '</span>';
+      html += '<div><div style="font-size:13px;font-weight:700;color:var(--text-primary)">' + escapeHtml(camp.name||'') + '</div>';
+      html += '<div style="font-size:10px;color:var(--text-muted)">' + (camp.channel||'').toUpperCase() + ' | Conversion: <span style="color:' + (convColors[camp.expected_conversion]||'#6b7280') + ';font-weight:600">' + (camp.expected_conversion||'').toUpperCase() + '</span></div></div></div>';
+      html += '<div style="background:var(--bg-tertiary);border-radius:6px;padding:10px;font-size:12px;color:var(--text-primary);line-height:1.6;margin-bottom:8px;font-style:italic">"' + escapeHtml(camp.message||'') + '"</div>';
+      html += '<div style="font-size:11px;color:var(--text-muted)"><strong>Rationale:</strong> ' + escapeHtml(camp.rationale||'') + '</div>';
+      html += '</div>';
+    });
+    html += '</div></div>';
+  }
+
+  // ── Cross-sell + Products ──
+  html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">';
+
+  // Cross-sell
+  if (intel.cross_sell && intel.cross_sell.length) {
+    html += '<div class="card"><div class="card-header"><h3>Cross-Sell Opportunities</h3></div>';
+    intel.cross_sell.forEach(cs => {
+      html += '<div style="padding:8px 0;border-bottom:1px solid var(--border);font-size:13px;color:var(--text-primary)">→ ' + escapeHtml(cs) + '</div>';
+    });
+    html += '</div>';
+  }
+
+  // Matched products (vector search)
+  if (prods.length) {
+    html += '<div class="card"><div class="card-header"><h3>Product Matches</h3><span class="badge" style="background:#dcfce7;color:#166534">$vectorSearch</span></div>';
+    prods.forEach(p => {
+      const pct = Math.round((p.score||0) * 100);
+      html += '<div style="padding:8px 0;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px">';
+      html += '<div style="min-width:42px;height:42px;border-radius:50%;background:linear-gradient(135deg,#00684A,#00ED64);display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;font-weight:700">' + pct + '%</div>';
+      html += '<div><div style="font-size:13px;font-weight:600;color:var(--text-primary)">' + escapeHtml(p.name) + '</div>';
+      html += '<div style="font-size:11px;color:var(--text-muted)">' + escapeHtml(p.description) + '</div></div></div>';
+    });
+    html += '</div>';
+  }
+  html += '</div>';
+
+  r.innerHTML = html;
+}
+
+/* ═══════════════════════════════════════════════════════
+   RENDER: Settings page
+   ═══════════════════════════════════════════════════════ */
+function renderSettings() {
+  if (!activeCustomer) return;
+  $('settingsName').value = activeCustomer.full_name || activeCustomer.name || '';
+  $('settingsEmployment').value = (activeCustomer.employment_type || '').replace(/_/g, ' ');
+  $('settingsIncome').value = fmtUSD(activeCustomer.income_usd || activeCustomer.monthly_income || 0);
+}
+
+/* ═══════════════════════════════════════════════════════
+   PORTAL SWITCHING
+   ═══════════════════════════════════════════════════════ */
+function switchPortal(portal) {
+  currentPortal = portal;
+  document.querySelectorAll('.portal-bar .tabs button').forEach(b => b.classList.remove('active'));
+  event.target.classList.add('active');
+  $('customerPortal').classList.toggle('hidden', portal !== 'customer');
+  $('employeePortal').classList.toggle('hidden', portal !== 'employee');
+  $('custPicker').classList.toggle('hidden', portal !== 'customer');
+
+  if (portal === 'customer') {
+    const name = activeCustomer ? (activeCustomer.full_name || activeCustomer.name || '').split(' ')[0] : '';
+    $('headerUserName').textContent = name ? 'Welcome, ' + name : 'Welcome';
+    $('headerAvatar').textContent = activeCustomer ? initials(activeCustomer.full_name || activeCustomer.name) : '--';
+  } else {
+    $('headerUserName').textContent = 'Employee: James Tan';
+    $('headerAvatar').textContent = 'JT';
+    loadEmpCustomers();
+    loadKYCDocs();
+  }
+}
+
+/* ═══════════════════════════════════════════════════════
+   CUSTOMER NAV
+   ═══════════════════════════════════════════════════════ */
+const custPages = ['dashboard','accounts','transfers','payments','loans','investments','settings'];
+function showCustomerPage(page) {
+  custPages.forEach(p => {
+    const el = $('page-' + p);
+    if (el) el.classList.toggle('hidden', p !== page);
+  });
+  document.querySelectorAll('#customerPortal .sidebar .nav-item').forEach(n => n.classList.remove('active'));
+  event?.target?.closest?.('.nav-item')?.classList.add('active');
+}
+
+/* ═══════════════════════════════════════════════════════
+   EMPLOYEE TABS
+   ═══════════════════════════════════════════════════════ */
+function showEmpTab(tab) {
+  ['credit', 'kyc', 'intel', 'analytics', 'askdata'].forEach(t => {
+    const el = $('tab-' + t);
+    if (el) el.classList.toggle('hidden', tab !== t);
+  });
+  document.querySelectorAll('#employeePortal .sidebar .nav-item').forEach(n => n.classList.remove('active'));
+  event?.target?.closest?.('.nav-item')?.classList.add('active');
+  if (tab === 'analytics') loadAnalytics();
+}
+
+/* ═══════════════════════════════════════════════════════
+   CHATBOT
+   ═══════════════════════════════════════════════════════ */
+let chatOpen = false;
+function toggleChat() {
+  chatOpen = !chatOpen;
+  $('chatPanel').classList.toggle('visible', chatOpen);
+  const fab = $('chatFab');
+  fab.textContent = chatOpen ? '✕' : '💬';
+  fab.classList.toggle('open', chatOpen);
+  if (chatOpen) $('chatInput').focus();
+}
+document.addEventListener('DOMContentLoaded', () => {
+  const tog = $('pipelineToggle');
+  if (tog) {
+    if (tog.checked) $('chatPanel').classList.add('pipeline-on');
+    tog.addEventListener('change', () => {
+      $('chatPanel').classList.toggle('pipeline-on', tog.checked);
+    });
+  }
+});
+
+function appendMsg(text, role, sourcesHtml) {
+  const wrap = $('chatMessages');
+  const div = document.createElement('div');
+  div.className = 'chat-msg ' + role;
+  let html = text.replace(/\n/g, '<br>');
+  if (sourcesHtml) html += '<div class="sources">' + sourcesHtml + '</div>';
+  div.innerHTML = html;
+  wrap.appendChild(div);
+  wrap.scrollTop = wrap.scrollHeight;
+}
+
+function showTyping() {
+  const wrap = $('chatMessages');
+  const div = document.createElement('div');
+  div.className = 'chat-typing'; div.id = 'typingIndicator';
+  div.innerHTML = '<span class="spinner"></span> Thinking...';
+  wrap.appendChild(div); wrap.scrollTop = wrap.scrollHeight;
+}
+function hideTyping() { $('typingIndicator')?.remove(); }
+
+const DS = 'background:#0d1117;color:#c9d1d9;border-radius:8px;font-size:11px;line-height:1.7;overflow-x:auto;overflow-y:auto;padding:12px;margin-top:8px;';
+const DH = 'color:#f0883e;font-weight:700;margin-top:10px;margin-bottom:2px;font-size:12px;';
+const DV = 'color:#7ee787';
+const DP = 'background:#161b22;padding:8px;border-radius:4px;margin:4px 0;white-space:pre-wrap;word-break:break-all;color:#c9d1d9;font-size:10.5px;';
+
+function renderSourceDocs(sources) {
+  if (!sources || !sources.length) return '';
+  let h = `<div style="${DH}">📄 Retrieved Documents from MongoDB Atlas Vector Search</div>`;
+  h += '<div style="display:flex;flex-direction:column;gap:6px">';
+  sources.forEach((s, i) => {
+    const score = s.score ? (s.score * 100).toFixed(2) + '%' : '—';
+    const bar = s.score ? `<div style="background:#238636;height:4px;border-radius:2px;width:${Math.round(s.score*100)}%;margin-top:3px"></div>` : '';
+    h += `<div style="background:#161b22;padding:8px;border-radius:6px">
+      <div style="color:#58a6ff;font-weight:600">#${i+1} ${s.title} <span style="color:#8b949e;font-weight:400">— similarity: <span style="${DV}">${score}</span></span></div>${bar}
+      <div style="color:#8b949e;margin-top:4px">Category: ${s.category||'—'}</div>
+      <div style="margin-top:4px"><span style="color:#58a6ff">EN:</span> ${(s.content_en||'').substring(0,150)}${(s.content_en||'').length>150?'…':''}</div>
+      <div style="margin-top:2px"><span style="color:#d2a8ff">KM:</span> ${(s.content_km||'').substring(0,150)}${(s.content_km||'').length>150?'…':''}</div>
+    </div>`;
+  });
+  h += '</div>';
+  return h;
+}
+
+function renderBedrockLogs(bedrock_events) {
+  if (!bedrock_events || !bedrock_events.length) return '<div style="color:#8b949e;margin-top:4px">No Bedrock logs found yet — logs may take a few seconds to appear in CloudWatch.</div>';
+  let h = '';
+  bedrock_events.forEach(ev => {
+    const ts = ev._timestamp ? new Date(ev._timestamp).toISOString() : '';
+    if (ev.event === 'BEDROCK_REQUEST') {
+      h += `<div style="background:#161b22;padding:8px;border-radius:6px;margin-top:6px">
+        <div style="color:#f97583;font-weight:600">→ BEDROCK_REQUEST <span style="color:#8b949e;font-weight:400">${ts}</span></div>
+        <div>Model: <span style="${DV}">${ev.model||'?'}</span> | max_tokens: <span style="${DV}">${ev.max_tokens||'?'}</span> | messages: <span style="${DV}">${ev.message_count||'?'}</span></div>
+        <div style="color:#8b949e;margin-top:4px">User message preview:</div>
+        <pre style="${DP}">${ev.user_message_preview||''}</pre>
+      </div>`;
+    } else if (ev.event === 'BEDROCK_RESPONSE') {
+      h += `<div style="background:#161b22;padding:8px;border-radius:6px;margin-top:6px">
+        <div style="color:#7ee787;font-weight:600">← BEDROCK_RESPONSE <span style="color:#8b949e;font-weight:400">${ts}</span></div>
+        <div>Model: <span style="${DV}">${ev.model||'?'}</span> | Latency: <span style="${DV}">${ev.latency_ms||'?'}ms</span> | Stop: <span style="${DV}">${ev.stop_reason||'?'}</span></div>
+        <div>Tokens — input: <span style="${DV}">${ev.input_tokens||'?'}</span> | output: <span style="${DV}">${ev.output_tokens||'?'}</span></div>
+        <div style="color:#8b949e;margin-top:4px">Answer preview:</div>
+        <pre style="${DP}">${ev.answer_preview||''}</pre>
+      </div>`;
+    } else if (ev.event === 'BEDROCK_ERROR') {
+      h += `<div style="background:#3d1117;padding:8px;border-radius:6px;margin-top:6px">
+        <div style="color:#f97583;font-weight:600">✖ BEDROCK_ERROR</div>
+        <pre style="${DP}">${ev.error||''}</pre>
+      </div>`;
+    }
+  });
+  return h;
+}
+
+async function sendChat() {
+  const input = $('chatInput');
+  const q = input.value.trim();
+  if (!q) return;
+  input.value = '';
+  appendMsg(q, 'user');
+  showTyping();
+  $('chatSendBtn').disabled = true;
+  const showPipeline = $('pipelineToggle') && $('pipelineToggle').checked;
+
+  try {
+    const res = await fetch('/api/faq?q=' + encodeURIComponent(q) + '&limit=5');
+    const data = await res.json();
+    hideTyping();
+
+    let extra = '';
+    if (data.sources && data.sources.length > 0 && !showPipeline) {
+      extra = '<strong>Sources:</strong> ' + data.sources.slice(0, 3).map(s =>
+        s.title + ' <em>(' + (s.score ? (s.score * 100).toFixed(1) + '%' : '—') + ')</em>'
+      ).join(', ');
+    }
+
+    if (showPipeline) {
+      const d = data.debug || {};
+      const em = d.embedding || {};
+      const vs = d.vector_search || {};
+      const llm = d.llm || {};
+
+      let panel = `<div style="${DS}max-height:500px">`;
+      panel += '<div style="color:#58a6ff;font-weight:700;font-size:13px;margin-bottom:8px">🔬 Live AI Pipeline Evidence</div>';
+
+      panel += `<div style="${DH}">① Voyage AI Embedding</div>`;
+      panel += `<div>Model: <span style="${DV}">${em.model||'?'}</span> | Dims: <span style="${DV}">${em.dimensions||'?'}</span> | Latency: <span style="${DV}">${em.latency_ms||'?'}ms</span></div>`;
+
+      panel += `<div style="${DH}">② MongoDB Atlas Vector Search — Retrieved Documents</div>`;
+      panel += `<div>Index: <span style="${DV}">${vs.index||'?'}</span> | Collection: <span style="${DV}">${vs.collection||'?'}</span> | Results: <span style="${DV}">${vs.results_returned||0}</span> | Latency: <span style="${DV}">${vs.latency_ms||'?'}ms</span></div>`;
+      panel += renderSourceDocs(data.sources);
+
+      panel += `<div style="${DH}">③ Amazon Bedrock (Claude) — via AWS Lambda</div>`;
+      panel += `<div>Model: <span style="${DV}">${llm.model||'?'}</span> | Latency: <span style="${DV}">${llm.latency_ms||'?'}ms</span> | Tokens in/out: <span style="${DV}">${(llm.usage||{}).input_tokens||'?'}/${(llm.usage||{}).output_tokens||'?'}</span></div>`;
+
+      panel += `<div style="${DH}">④ AWS CloudWatch Logs (live from Lambda)</div>`;
+      panel += '<div id="cwLogsPlaceholder" style="color:#8b949e">Fetching CloudWatch logs...</div>';
+
+      panel += '</div>';
+      extra = panel;
+    }
+
+    appendMsg(data.answer || 'Sorry, I could not find an answer.', 'bot', extra);
+
+    if (showPipeline) {
+      setTimeout(async () => {
+        try {
+          const logRes = await fetch('/api/debug/lambda-logs?minutes=2&limit=20');
+          const logData = await logRes.json();
+          const placeholder = document.getElementById('cwLogsPlaceholder');
+          if (placeholder) {
+            placeholder.outerHTML = renderBedrockLogs(logData.bedrock_events || []);
+          }
+        } catch (e) {
+          const placeholder = document.getElementById('cwLogsPlaceholder');
+          if (placeholder) placeholder.textContent = 'Could not fetch CloudWatch logs — ensure AWS credentials are configured.';
+        }
+      }, 2000);
+    }
+  } catch (e) {
+    hideTyping();
+    appendMsg('Connection error — is the FastAPI server running on this port?', 'bot');
+  }
+  $('chatSendBtn').disabled = false;
+}
+
+/* ═══════════════════════════════════════════════════════
+   EMPLOYEE: Credit Scoring
+   ═══════════════════════════════════════════════════════ */
+let empCustomersCache = [];
+async function loadEmpCustomers() {
+  try {
+    const [custRes, loanRes] = await Promise.all([fetch('/api/customers'), fetch('/api/loan-applications')]);
+    empCustomersCache = await custRes.json();
+    window._allLoans = await loanRes.json();
+    const sel = $('creditCustomerSelect');
+    sel.innerHTML = '<option value="">— Select a customer —</option>';
+    const intelSel = $('intelCustomerSelect');
+    intelSel.innerHTML = '<option value="">— Select a customer —</option>';
+    empCustomersCache.forEach(c => {
+      const label = (c.full_name || c.name || c._id) + (c.credit_score ? ' (CS: ' + c.credit_score + ')' : '');
+      const o = document.createElement('option');
+      o.value = c._id;
+      o.textContent = label;
+      sel.appendChild(o);
+      const o2 = document.createElement('option');
+      o2.value = c._id;
+      o2.textContent = label;
+      intelSel.appendChild(o2);
+    });
+    sel.onchange = () => {
+      const cid = sel.value;
+      const loanSel = $('creditLoanSelect');
+      loanSel.innerHTML = '<option value="">— Select a loan —</option>';
+      (window._allLoans || []).filter(l => String(l.customer_id) === cid).forEach(l => {
+        const o = document.createElement('option');
+        o.value = l._id;
+        o.textContent = ((l.purpose||'Loan').charAt(0).toUpperCase()+(l.purpose||'').slice(1)) + ' — ' + fmtUSD(l.loan_amount || l.amount_usd || 0);
+        loanSel.appendChild(o);
+      });
+      loanSel.onchange = () => { $('creditAnalyzeBtn').disabled = !loanSel.value; };
+      $('creditAnalyzeBtn').disabled = true;
+    };
+  } catch (e) { console.warn('Could not load customers', e); }
+}
+
+async function analyzeCredit() {
+  const cid = $('creditCustomerSelect').value;
+  const lid = $('creditLoanSelect').value;
+  if (!cid || !lid) return;
+  const btn = $('creditAnalyzeBtn');
+  const sp = $('creditSpinner');
+  btn.disabled = true; sp.classList.remove('hidden');
+  $('creditRecommendations').classList.add('hidden');
+  $('creditDocuments').classList.add('hidden');
+  try {
+    const res = await fetch('/api/credit-score?customer_id=' + encodeURIComponent(cid) + '&loan_id=' + encodeURIComponent(lid));
+    const d = await res.json();
+    if (d.detail) { alert(d.detail); return; }
+    $('creditScoreVal').textContent = d.risk_score ?? '—';
+    $('creditRiskLevel').textContent = (d.risk_level || '—').toUpperCase();
+    $('creditDTI').textContent = d.factors?.dti != null ? d.factors.dti + '%' : '—';
+    $('creditCreditScore').textContent = d.factors?.credit_score ?? '—';
+    const badge = $('creditDecisionBadge');
+    badge.textContent = (d.decision || '').toUpperCase();
+    badge.className = 'badge ' + (d.decision === 'approved' ? 'badge-success' : d.decision === 'declined' ? 'badge-danger' : 'badge-warning');
+    $('creditExplanation').textContent = d.explanation || 'No explanation generated.';
+    $('creditResult').classList.remove('hidden');
+
+    const supDocs = d.supporting_documents || [];
+    const docsSection = $('creditDocuments');
+    const docsContainer = $('creditDocsContainer');
+    if (supDocs.length > 0) {
+      docsContainer.innerHTML = supDocs.map(sd => {
+        const icon = sd.doc_type === 'payslip' ? '💰' : '🏦';
+        const label = (sd.doc_type || 'document').replace('_', ' ').toUpperCase();
+        return '<div style="padding:14px 16px;background:var(--surface);border-radius:8px;border:1px solid var(--border);display:flex;align-items:center;gap:12px">'
+          + '<span style="font-size:28px">' + icon + '</span>'
+          + '<div style="flex:1;min-width:0">'
+          + '<div style="font-weight:600;font-size:13px">' + label + '</div>'
+          + '<div style="font-size:11px;color:var(--text-muted);word-break:break-all">' + (sd.filename || '') + '</div>'
+          + '<div style="font-size:11px;color:var(--text-muted)">Generated: ' + (sd.generated_date || '') + '</div>'
+          + '</div>'
+          + '<a href="/api/documents/' + sd._id + '/pdf" target="_blank" class="btn btn-primary" style="font-size:11px;padding:6px 10px;white-space:nowrap">View PDF</a>'
+          + '</div>';
+      }).join('');
+      docsSection.classList.remove('hidden');
+    } else {
+      docsSection.classList.add('hidden');
+    }
+
+    if (d.decision === 'declined') {
+      loadProductRecommendations(cid);
+    }
+  } catch (e) { alert('Error: ' + e.message); }
+  finally { btn.disabled = false; sp.classList.add('hidden'); }
+}
+
+async function loadProductRecommendations(customerId) {
+  try {
+    const res = await fetch('/api/recommend-products?customer_id=' + encodeURIComponent(customerId) + '&limit=3');
+    const d = await res.json();
+    const recs = d.recommendations || [];
+    if (recs.length === 0) return;
+    const container = $('creditRecsContainer');
+    container.innerHTML = recs.map(r =>
+      '<div style="display:flex;align-items:flex-start;justify-content:space-between;padding:14px 16px;background:var(--surface);border-radius:8px;margin-bottom:8px;border:1px solid var(--border)">' +
+      '<div style="flex:1"><strong style="font-size:14px">' + (r.name || 'Product') + '</strong>' +
+      '<p style="font-size:12px;color:var(--text-muted);margin-top:4px;line-height:1.5">' + (r.description || '') + '</p></div>' +
+      '<div style="text-align:right;margin-left:16px;flex-shrink:0"><span style="font-size:18px;font-weight:700;color:var(--primary)">' +
+      (r.score ? (r.score * 100).toFixed(1) + '%' : '—') + '</span>' +
+      '<br><span style="font-size:10px;color:var(--text-muted)">match</span></div></div>'
+    ).join('');
+    $('creditRecommendations').classList.remove('hidden');
+  } catch (e) { console.warn('Could not load product recommendations', e); }
+}
+
+/* ═══════════════════════════════════════════════════════
+   EMPLOYEE: KYC Verification
+   ═══════════════════════════════════════════════════════ */
+let _kycDocsCache = [];
+async function loadKYCDocs() {
+  try {
+    const res = await fetch('/api/kyc-documents');
+    _kycDocsCache = await res.json();
+    const sel = $('kycDocSelect');
+    sel.innerHTML = '<option value="">-- Select a document --</option>';
+    _kycDocsCache.forEach(d => {
+      const o = document.createElement('option');
+      o.value = d._id;
+      const typeLabel = (d.document_type || 'document').replace(/_/g, ' ');
+      const custName = d.customer_name || '';
+      o.textContent = typeLabel.toUpperCase() + ' - ' + (d.document_number || d._id) + (custName ? ' (' + custName + ')' : '');
+      sel.appendChild(o);
+    });
+    sel.onchange = () => { $('kycVerifyBtn').disabled = !sel.value; };
+  } catch (e) { console.warn('Could not load KYC docs', e); }
+}
+
+async function verifyKYC() {
+  const did = $('kycDocSelect').value;
+  if (!did) return;
+  const btn = $('kycVerifyBtn');
+  const sp = $('kycSpinner');
+  btn.disabled = true; sp.classList.remove('hidden');
+  try {
+    const res = await fetch('/api/kyc-check?document_id=' + encodeURIComponent(did));
+    const raw = await res.text();
+    let d;
+    try {
+      d = raw ? JSON.parse(raw) : {};
+    } catch (_) {
+      alert('KYC check failed (HTTP ' + res.status + '). Server did not return JSON:\n' + raw.slice(0, 400));
+      return;
+    }
+    if (!res.ok) {
+      let err = d.detail;
+      if (Array.isArray(err)) err = err.map(e => (e.msg || e.type || '') + (e.loc ? ' ' + JSON.stringify(e.loc) : '')).filter(Boolean).join('\n');
+      alert(err || ('Request failed (HTTP ' + res.status + ')'));
+      return;
+    }
+
+    const statusBadge = $('kycStatusBadge');
+    const hasIssues = d.risk_flags && d.risk_flags.length > 0;
+    statusBadge.textContent = hasIssues ? 'ISSUES FOUND' : 'CLEAR';
+    statusBadge.className = 'badge ' + (hasIssues ? 'badge-danger' : 'badge-success');
+
+    const flagsDiv = $('kycRiskFlags');
+    flagsDiv.innerHTML = '';
+    (d.risk_flags || []).forEach(f => {
+      const s = document.createElement('span');
+      s.className = 'risk-flag';
+      s.style.cssText = f.includes('expired')
+        ? 'display:inline-block;padding:4px 12px;border-radius:4px;font-size:11px;font-weight:600;margin-right:8px;background:#fee2e2;color:#991b1b'
+        : 'display:inline-block;padding:4px 12px;border-radius:4px;font-size:11px;font-weight:600;margin-right:8px;background:#fef3c7;color:#92400e';
+      s.textContent = f.replace(/_/g, ' ').toUpperCase();
+      flagsDiv.appendChild(s);
+    });
+
+    // PDF viewer
+    const pdfUrl = '/api/kyc-documents/' + did + '/pdf';
+    $('kycPdfViewer').innerHTML = '<iframe src="' + pdfUrl + '" style="width:100%;height:380px;border:none;border-radius:6px" title="KYC Document Scan"></iframe>';
+    const pdfLink = $('kycPdfLink');
+    pdfLink.href = pdfUrl;
+    pdfLink.style.display = 'inline-block';
+
+    // Document details table
+    const doc = d.document || {};
+    const detailFields = [
+      ['Document Type', (doc.document_type || '').replace(/_/g, ' ').toUpperCase()],
+      ['Document Number', doc.document_number],
+      ['Issue Date', doc.issue_date],
+      ['Expiry Date', doc.expiry_date],
+      ['Verification Status', doc.verification_status],
+      ['Description', doc.description],
+    ];
+    $('kycDocInfo').innerHTML = '<table style="width:100%">' +
+      detailFields.filter(([,v]) => v).map(([label, value]) => {
+        let style = 'font-size:13px';
+        if (label === 'Verification Status') {
+          const color = value === 'verified' ? 'var(--success)' : value === 'flagged' ? 'var(--danger)' : 'var(--warning, #d97706)';
+          style += ';font-weight:700;color:' + color;
+        }
+        return '<tr><td style="padding:5px 8px;font-weight:600;color:var(--text-muted);width:140px;font-size:11px;text-transform:uppercase;vertical-align:top">' + label + '</td><td style="padding:5px 8px;' + style + '">' + value + '</td></tr>';
+      }).join('') + '</table>';
+
+    // Customer cross-reference
+    const custId = doc.customer_id;
+    if (custId) {
+      try {
+        const custRes = await fetch('/api/customers');
+        const allCusts = await custRes.json();
+        const cust = allCusts.find(c => c._id === custId);
+        if (cust) {
+          $('kycCustomerInfo').innerHTML =
+            '<div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:12px">' +
+            '<h4 style="font-size:13px;margin-bottom:8px">Linked Customer Record</h4>' +
+            '<table style="width:100%">' +
+            [['Name', cust.full_name || cust.name], ['Credit Score', cust.credit_score], ['Employment', (cust.employment_type||'').replace(/_/g,' ')], ['Income (USD)', cust.income_usd ? '$' + Number(cust.income_usd).toLocaleString() : ''], ['Account Age', cust.account_age_months ? cust.account_age_months + ' months' : '']].filter(([,v]) => v).map(([l,v]) =>
+              '<tr><td style="padding:3px 8px;font-size:11px;color:var(--text-muted);font-weight:600;width:120px">' + l + '</td><td style="padding:3px 8px;font-size:12px">' + v + '</td></tr>'
+            ).join('') + '</table></div>';
+        }
+      } catch (_) {}
+    }
+
+    // Duplicates
+    const dupDiv = $('kycDuplicatesList');
+    if (d.duplicates && d.duplicates.length > 0) {
+      dupDiv.innerHTML = d.duplicates.map(dup =>
+        '<div style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px;background:var(--surface);border-radius:8px;margin-bottom:8px;border:1px solid var(--border)">' +
+        '<div style="flex:1"><strong style="font-size:13px">' + (dup.document_type || 'Document').replace(/_/g,' ').toUpperCase() + '</strong>' +
+        '<div style="font-size:11px;color:var(--text-muted);margin-top:2px">ID: ' + (dup.id || '') + (dup.customer_id ? ' | Customer: ' + dup.customer_id : '') + '</div></div>' +
+        '<div style="text-align:right;margin-left:16px"><span style="font-size:22px;font-weight:700;color:var(--danger)">' + (dup.similarity * 100).toFixed(1) + '%</span>' +
+        '<div style="font-size:10px;color:var(--text-muted)">similarity</div></div></div>'
+      ).join('');
+      $('kycDuplicatesSection').classList.remove('hidden');
+    } else {
+      dupDiv.innerHTML = '<p style="color:var(--text-muted);font-size:13px;padding:16px;text-align:center;background:var(--surface);border-radius:8px">No duplicate documents detected above the similarity threshold.</p>';
+      $('kycDuplicatesSection').classList.remove('hidden');
+    }
+
+    const resultEl = $('kycResult');
+    resultEl.classList.remove('hidden');
+    resultEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  } catch (e) { alert('Error: ' + e.message); }
+  finally { btn.disabled = false; sp.classList.add('hidden'); }
+}
+
+/* ═══════════════════════════════════════════════════════
+   INIT
+   ═══════════════════════════════════════════════════════ */
+bootstrap();
+</script>
+</body>
+</html>
