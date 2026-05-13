@@ -4,6 +4,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Atlas Digital Bank</title>
+<script src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
 <style>
 /* ── Reset & Variables ─────────────────────────────────── */
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -216,7 +217,838 @@ tr:hover{background:var(--surface)}
 /* ── Hide/show ─────────────────────────────────────────── */
 .hidden{display:none!important}
 
+/* ── Graph / Network Analysis ──────────────────────────── */
+.graph-toolbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:14px}
+.graph-toolbar input,.graph-toolbar select{padding:8px 12px;border:1px solid var(--border);border-radius:8px;background:var(--card);font-size:13px}
+.graph-toolbar input{flex:1;min-width:200px}
+.graph-scenarios{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px;margin-bottom:16px}
+.graph-scenario{
+  background:var(--card);border:1px solid var(--border);border-radius:var(--radius);
+  padding:14px 16px;text-align:left;transition:all .15s;cursor:pointer;
+  display:flex;flex-direction:column;gap:6px;font-family:inherit;
+}
+.graph-scenario:hover{border-color:var(--primary);transform:translateY(-1px);box-shadow:var(--shadow)}
+.graph-scenario .gs-icon{font-size:20px}
+.graph-scenario .gs-title{font-weight:700;font-size:13px;color:var(--text)}
+.graph-scenario .gs-sub{font-size:11px;color:var(--text-muted);line-height:1.4}
+.graph-container{
+  width:100%;height:560px;background:#0d1117;border-radius:var(--radius);
+  border:1px solid #30363d;position:relative;overflow:hidden;
+}
+.graph-container.empty::after{
+  content:'No graph loaded — pick a scenario or search for an entity above.';
+  position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  color:#8b949e;font-size:13px;text-align:center;padding:24px;
+}
+.graph-legend{
+  display:flex;gap:14px;flex-wrap:wrap;padding:12px 16px;background:var(--card);
+  border:1px solid var(--border);border-radius:8px;margin-top:12px;font-size:11px;
+}
+.graph-legend .lg-item{display:flex;align-items:center;gap:6px}
+.graph-legend .lg-dot{width:10px;height:10px;border-radius:50%;display:inline-block}
+.graph-info{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:10px 16px;background:var(--surface);border-radius:8px;margin-top:10px;
+  font-size:12px;color:var(--text-muted);
+}
+.graph-info .time-badge{
+  background:var(--accent);color:#000;padding:2px 10px;border-radius:10px;
+  font-weight:700;font-size:11px;
+}
+.graph-narrative{
+  background:#fffbeb;border-left:4px solid var(--warning);
+  padding:12px 16px;border-radius:6px;margin-bottom:12px;font-size:13px;line-height:1.6;
+}
+.graph-pipeline{
+  background:#0d1117;color:#c9d1d9;padding:14px;border-radius:8px;
+  font-family:'SF Mono',Menlo,monospace;font-size:11px;line-height:1.5;
+  overflow-x:auto;max-height:220px;overflow-y:auto;
+  border:1px solid #30363d;
+}
+.graph-pipeline .key{color:#79c0ff}
+.graph-pipeline .str{color:#a5d6ff}
+.graph-pipeline .num{color:#79c0ff}
+.entity-search-results{
+  position:absolute;background:var(--card);border:1px solid var(--border);
+  border-radius:8px;box-shadow:var(--shadow-lg);max-height:280px;overflow-y:auto;
+  z-index:10;width:100%;margin-top:4px;
+}
+.entity-search-result{
+  padding:8px 12px;cursor:pointer;border-bottom:1px solid var(--border);
+  display:flex;justify-content:space-between;align-items:center;font-size:13px;
+}
+.entity-search-result:hover{background:var(--surface)}
+.entity-search-result .esr-type{
+  font-size:10px;text-transform:uppercase;letter-spacing:.5px;
+  background:var(--surface);padding:2px 8px;border-radius:10px;color:var(--text-muted);
+}
+
+/* ── Risk Alerts Banner ────────────────────────────────── */
+.risk-alerts{
+  background:linear-gradient(135deg,#fef2f2 0%,#fff7ed 100%);
+  border:1px solid #fecaca;border-left:4px solid var(--danger);
+  border-radius:var(--radius);padding:14px 18px;margin-bottom:14px;
+}
+.risk-alerts-header{
+  display:flex;align-items:center;gap:10px;font-weight:700;font-size:14px;color:#991b1b;
+  margin-bottom:10px;
+}
+.risk-alerts-header .pulse{
+  width:10px;height:10px;border-radius:50%;background:var(--danger);
+  animation:pulse 1.6s ease-in-out infinite;
+}
+@keyframes pulse{
+  0%,100%{box-shadow:0 0 0 0 rgba(239,68,68,.6)}
+  50%{box-shadow:0 0 0 8px rgba(239,68,68,0)}
+}
+.risk-alerts-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:8px}
+.risk-alert-item{
+  background:#fff;border:1px solid #fee2e2;border-radius:8px;
+  padding:10px 12px;cursor:pointer;transition:all .15s;
+  display:flex;flex-direction:column;gap:4px;font-family:inherit;text-align:left;
+}
+.risk-alert-item:hover{border-color:var(--danger);transform:translateY(-1px);box-shadow:var(--shadow)}
+.risk-alert-item .ra-title{font-weight:700;font-size:12px;color:#991b1b;display:flex;align-items:center;gap:6px}
+.risk-alert-item .ra-summary{font-size:11px;color:var(--text-muted);line-height:1.4}
+.risk-alert-item .ra-severity{
+  display:inline-block;font-size:9px;font-weight:700;text-transform:uppercase;
+  letter-spacing:.5px;padding:1px 6px;border-radius:4px;
+}
+.ra-severity.high{background:var(--danger);color:#fff}
+.ra-severity.medium{background:var(--warning);color:#000}
+
+/* ── Investigator Chat ─────────────────────────────────── */
+.investigator-chat{display:flex;flex-direction:column;gap:0}
+.chat-history{
+  max-height:280px;overflow-y:auto;display:flex;flex-direction:column;gap:10px;
+  padding:8px 4px;margin-bottom:12px;
+}
+.chat-history:empty{display:none}
+.chat-bubble{max-width:88%;padding:10px 14px;border-radius:14px;font-size:13px;line-height:1.55}
+.chat-bubble.user{
+  align-self:flex-end;background:var(--primary);color:#fff;border-bottom-right-radius:4px;
+}
+.chat-bubble.assistant{
+  align-self:flex-start;background:var(--surface);color:var(--text);
+  border:1px solid var(--border);border-bottom-left-radius:4px;
+}
+.chat-bubble.assistant .chat-meta{
+  margin-top:8px;padding-top:8px;border-top:1px solid var(--border);
+  font-size:11px;color:var(--text-muted);
+}
+.chat-bubble.assistant .chat-meta strong{color:var(--text)}
+.chat-bubble.error{
+  align-self:flex-start;background:#fee2e2;color:#991b1b;border:1px solid #fca5a5;
+}
+.chat-input-row{display:flex;gap:8px;align-items:center}
+.chat-input-row input{
+  flex:1;padding:11px 14px;border:1px solid var(--border);border-radius:24px;
+  background:var(--surface);font-size:13px;
+}
+.chat-input-row input:focus{outline:none;border-color:var(--primary)}
+.chat-input-row button{
+  padding:10px 20px;background:var(--primary);color:#fff;border:none;
+  border-radius:24px;font-weight:600;display:flex;align-items:center;gap:6px;
+}
+.chat-input-row button:disabled{opacity:.5;cursor:not-allowed}
+.chat-suggestions{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.chat-suggestion{
+  background:var(--surface);border:1px solid var(--border);border-radius:14px;
+  padding:5px 10px;font-size:11px;color:var(--text-muted);cursor:pointer;transition:all .15s;
+  font-family:inherit;
+}
+.chat-suggestion:hover{border-color:var(--accent);color:var(--accent)}
+.chat-typing{
+  align-self:flex-start;display:flex;gap:4px;padding:10px 14px;background:var(--surface);
+  border:1px solid var(--border);border-radius:14px;font-size:13px;color:var(--text-muted);
+}
+.chat-typing .dot{
+  width:6px;height:6px;border-radius:50%;background:var(--text-muted);
+  animation:bounce 1.2s ease-in-out infinite;
+}
+.chat-typing .dot:nth-child(2){animation-delay:.2s}
+.chat-typing .dot:nth-child(3){animation-delay:.4s}
+@keyframes bounce{0%,80%,100%{transform:scale(.5);opacity:.5}40%{transform:scale(1);opacity:1}}
+
+/* ── Investigator Pro (side-by-side + LangGraph trace) ── */
+.investigator-grid{
+  display:grid;grid-template-columns:minmax(380px,0.9fr) 1.1fr;gap:14px;align-items:stretch;
+}
+@media (max-width:1180px){.investigator-grid{grid-template-columns:1fr}}
+.investigator-grid > .card{display:flex;flex-direction:column;margin-bottom:0}
+.investigator-grid .chat-history{
+  flex:1;min-height:380px;max-height:560px;
+}
+/* Right column: graph fills the card, header/toolbar removed entirely. */
+.inv-graph-card{padding:12px !important;gap:10px}
+.investigator-grid .graph-container{
+  width:100%;
+  min-height:560px;
+  height:560px;
+  flex:0 0 auto;          /* never let flex shrink the canvas to 0 */
+}
+.investigator-grid .graph-legend{margin-top:0}
+.inv-graph-footer{
+  display:flex;align-items:center;justify-content:space-between;gap:14px;
+  flex-wrap:wrap;padding:8px 4px 0;font-size:12px;
+}
+.inv-toggle{
+  display:inline-flex;align-items:center;gap:8px;cursor:pointer;
+  font-size:12px;color:var(--text);user-select:none;
+}
+.inv-toggle input[type="checkbox"]{
+  width:14px;height:14px;accent-color:var(--accent);cursor:pointer;
+}
+.inv-graph-info{display:flex;align-items:center;gap:10px}
+.inv-info-text{font-size:12px;color:var(--text-muted)}
+.inv-graph-info .time-badge{
+  background:var(--accent);color:#000;padding:2px 10px;border-radius:10px;
+  font-weight:700;font-size:11px;
+}
+
+/* ── LangGraph trace panel ─────────────────────────────── */
+.langgraph-panel{margin-top:14px}
+.langgraph-panel .lg-flow{
+  display:flex;align-items:center;gap:6px;flex-wrap:wrap;
+  padding:12px 14px;background:linear-gradient(135deg,#0d1117 0%,#161b22 100%);
+  border:1px solid #30363d;border-radius:8px;margin-bottom:12px;
+  font-family:'SF Mono',Menlo,monospace;font-size:11px;color:#c9d1d9;
+}
+.lg-flow .lg-node-pill{
+  display:inline-flex;align-items:center;gap:5px;padding:5px 10px;
+  border-radius:14px;border:1px solid #30363d;background:#161b22;
+  cursor:pointer;transition:all .15s;
+}
+.lg-flow .lg-node-pill:hover{border-color:var(--accent);transform:translateY(-1px)}
+.lg-flow .lg-node-pill.active{background:#1f2937;border-color:var(--accent);box-shadow:0 0 0 2px rgba(34,197,94,.2)}
+.lg-flow .lg-node-pill .lg-kind{
+  font-size:8px;text-transform:uppercase;letter-spacing:.4px;font-weight:700;
+  padding:1px 5px;border-radius:3px;
+}
+.lg-kind.llm{background:#7c3aed;color:#fff}
+.lg-kind.mongo{background:#10b981;color:#fff}
+.lg-kind.logic{background:#0ea5e9;color:#fff}
+.lg-flow .lg-ms{color:var(--accent);font-weight:700}
+.lg-flow .lg-arrow{color:#6b7280;font-size:12px;user-select:none}
+.lg-step-card{
+  background:#0d1117;border:1px solid #30363d;border-radius:8px;
+  margin-bottom:10px;overflow:hidden;
+}
+.lg-step-card .lg-step-head{
+  padding:10px 14px;display:flex;align-items:center;gap:10px;
+  background:#161b22;border-bottom:1px solid #30363d;font-size:12px;
+  cursor:pointer;user-select:none;
+}
+.lg-step-card .lg-step-head:hover{background:#1c2128}
+.lg-step-head .lg-step-num{
+  width:22px;height:22px;border-radius:50%;background:var(--primary);color:#fff;
+  display:inline-flex;align-items:center;justify-content:center;font-weight:700;font-size:11px;
+}
+.lg-step-head .lg-step-title{flex:1;color:#e6edf3;font-weight:600}
+.lg-step-head .lg-step-node{color:#8b949e;font-family:'SF Mono',monospace;font-size:11px}
+.lg-step-head .lg-step-ms{color:var(--accent);font-weight:700;font-size:11px}
+.lg-step-head .lg-step-caret{color:#8b949e;font-size:14px;transition:transform .15s}
+.lg-step-card.expanded .lg-step-caret{transform:rotate(90deg)}
+.lg-step-body{display:none;padding:0}
+.lg-step-card.expanded .lg-step-body{display:block}
+.lg-step-section{padding:12px 14px;border-top:1px solid #1c2128}
+.lg-step-section:first-child{border-top:none}
+.lg-step-section .lg-section-label{
+  font-size:10px;text-transform:uppercase;letter-spacing:.6px;color:#8b949e;
+  margin-bottom:6px;font-weight:700;
+}
+.lg-step-section pre{
+  margin:0;background:#010409;border:1px solid #21262d;border-radius:6px;
+  padding:10px 12px;font-family:'SF Mono',Menlo,monospace;font-size:11px;
+  line-height:1.5;color:#c9d1d9;overflow:auto;max-height:280px;
+}
+.lg-step-section .lg-code{color:#a5d6ff}
+.lg-panel-summary{
+  display:flex;align-items:center;gap:14px;flex-wrap:wrap;
+  padding:10px 14px;background:var(--surface);border-radius:6px;margin-bottom:10px;
+  font-size:12px;color:var(--text-muted);
+}
+.lg-panel-summary strong{color:var(--text)}
+.lg-panel-summary .lg-bullet{color:#d1d5db}
+.lg-panel-summary .lg-total{
+  background:var(--primary);color:#fff;padding:3px 10px;border-radius:12px;
+  font-weight:700;font-size:11px;
+}
+
+/* ── Evidence panel — every claim grounded in MongoDB ─── */
+.evidence-panel{margin-top:14px}
+.evidence-banner{
+  display:flex;align-items:center;gap:10px;
+  padding:10px 14px;border-radius:6px;margin-bottom:12px;font-size:12px;
+  background:linear-gradient(135deg,#ecfdf5 0%,#f0fdf4 100%);
+  border:1px solid #bbf7d0;color:#14532d;
+}
+.evidence-banner .ev-icon{font-size:18px}
+.evidence-section{margin-bottom:14px}
+.evidence-section .ev-section-head{
+  font-size:11px;text-transform:uppercase;letter-spacing:.6px;
+  color:var(--text-muted);font-weight:700;margin-bottom:6px;
+  display:flex;align-items:center;gap:6px;
+}
+.evidence-section .ev-section-head .ev-count{
+  background:var(--primary);color:#fff;font-size:10px;
+  padding:1px 7px;border-radius:10px;font-weight:700;
+}
+.ev-source-line{
+  font-family:'SF Mono',Menlo,monospace;font-size:11px;color:var(--text-muted);
+  background:var(--surface);padding:6px 10px;border-radius:4px;
+  display:inline-block;margin-bottom:8px;
+}
+.ev-fact-list{display:flex;flex-direction:column;gap:8px}
+.ev-fact-card{
+  background:var(--card);border:1px solid var(--border);border-radius:6px;overflow:hidden;
+}
+.ev-fact-card .ev-fact-head{
+  display:grid;grid-template-columns:1.2fr 2.6fr auto auto;gap:12px;align-items:center;
+  padding:10px 14px;font-size:12px;
+}
+.ev-fact-card .ev-claim{font-weight:600;color:var(--text)}
+.ev-fact-card .ev-source{
+  font-family:'SF Mono',Menlo,monospace;font-size:11px;
+  color:#0369a1;word-break:break-all;
+}
+.ev-fact-card .ev-value{
+  font-family:'SF Mono',Menlo,monospace;font-size:11px;color:#7c2d12;
+  background:#fef3c7;padding:2px 8px;border-radius:4px;
+  white-space:nowrap;text-align:center;
+}
+.ev-prov-toggle{
+  background:none;border:1px solid var(--border);border-radius:14px;
+  font-size:10px;padding:3px 9px;cursor:pointer;color:var(--text-muted);
+  display:inline-flex;align-items:center;gap:4px;white-space:nowrap;
+}
+.ev-prov-toggle:hover{border-color:var(--primary);color:var(--primary)}
+.ev-prov-toggle.matched{background:#dcfce7;border-color:#86efac;color:#166534}
+.ev-prov-toggle.unmatched{background:#fef3c7;border-color:#fcd34d;color:#92400e}
+.ev-prov-body{display:none;padding:0 14px 14px;border-top:1px solid var(--border);
+  background:linear-gradient(180deg, #f9fafb 0%, var(--card) 100%);}
+.ev-fact-card.expanded .ev-prov-body{display:block}
+.ev-fact-card.expanded .ev-prov-toggle .ev-caret{transform:rotate(90deg)}
+.ev-prov-toggle .ev-caret{display:inline-block;transition:transform .15s}
+
+.ev-prov-section{margin-top:12px}
+.ev-prov-label{
+  font-size:10px;text-transform:uppercase;letter-spacing:.6px;
+  color:var(--text-muted);font-weight:700;margin-bottom:6px;
+}
+.ev-prov-flow{
+  font-size:12px;line-height:1.55;color:var(--text);
+  background:#eff6ff;border-left:3px solid #3b82f6;
+  padding:10px 12px;border-radius:4px;
+}
+.ev-prov-note{
+  font-size:12px;line-height:1.55;color:var(--text-muted);
+  margin:8px 0 12px;font-style:italic;
+}
+.ev-prov-summary{
+  font-size:12px;font-weight:700;padding:8px 12px;border-radius:4px;
+  background:var(--surface);margin-top:10px;
+}
+.ev-prov-check{
+  background:#0d1117;border:1px solid #30363d;border-radius:6px;
+  margin-bottom:8px;overflow:hidden;
+}
+.ev-prov-check-head{
+  padding:8px 12px;background:#161b22;display:flex;align-items:center;gap:10px;
+  font-size:12px;cursor:pointer;
+}
+.ev-prov-check-head:hover{background:#1c2128}
+.ev-prov-check.expanded .ev-prov-check-head{border-bottom:1px solid #30363d}
+.ev-prov-check-badge{
+  width:22px;height:22px;border-radius:50%;display:inline-flex;
+  align-items:center;justify-content:center;font-size:11px;font-weight:700;
+}
+.ev-prov-check-badge.matched{background:#16a34a;color:#fff}
+.ev-prov-check-badge.unmatched{background:#6b7280;color:#fff}
+.ev-prov-check-title{flex:1;color:#e6edf3;font-weight:600;font-size:12px}
+.ev-prov-check-meta{font-size:11px;color:#8b949e;font-family:'SF Mono',monospace}
+.ev-prov-check-caret{color:#8b949e;font-size:14px;transition:transform .15s}
+.ev-prov-check.expanded .ev-prov-check-caret{transform:rotate(90deg)}
+.ev-prov-check-body{display:none;padding:10px 12px}
+.ev-prov-check.expanded .ev-prov-check-body{display:block}
+.ev-prov-check-body p.why{
+  color:#c9d1d9;font-size:12px;line-height:1.55;margin:0 0 10px;
+  border-left:3px solid #f59e0b;padding-left:10px;
+}
+.ev-prov-check-body pre{
+  margin:6px 0;padding:10px 12px;background:#010409;border:1px solid #21262d;
+  border-radius:4px;font-family:'SF Mono',Menlo,monospace;font-size:11px;
+  line-height:1.5;color:#c9d1d9;overflow:auto;max-height:220px;
+}
+.ev-prov-check-sublabel{
+  font-size:10px;text-transform:uppercase;letter-spacing:.5px;
+  color:#8b949e;margin:8px 0 2px;
+}
+.ev-doc-block{
+  background:#0d1117;border:1px solid #30363d;border-radius:6px;overflow:hidden;
+}
+.ev-doc-block pre{
+  margin:0;padding:12px 14px;font-family:'SF Mono',Menlo,monospace;
+  font-size:11px;line-height:1.5;color:#c9d1d9;overflow:auto;max-height:340px;
+}
+.ev-alert-card{
+  background:#0d1117;border:1px solid #30363d;border-radius:6px;
+  margin-bottom:8px;overflow:hidden;
+}
+.ev-alert-head{
+  padding:8px 12px;background:#161b22;border-bottom:1px solid #30363d;
+  display:flex;align-items:center;gap:8px;cursor:pointer;font-size:12px;
+}
+.ev-alert-head:hover{background:#1c2128}
+.ev-alert-card.expanded .ev-alert-head{border-bottom-color:#30363d}
+.ev-alert-head .ev-alert-severity{
+  font-size:9px;text-transform:uppercase;font-weight:700;
+  padding:2px 7px;border-radius:3px;letter-spacing:.4px;
+}
+.ev-alert-severity.high{background:#dc2626;color:#fff}
+.ev-alert-severity.medium{background:#f59e0b;color:#000}
+.ev-alert-head .ev-alert-kind{font-family:'SF Mono',monospace;color:#79c0ff;font-size:11px}
+.ev-alert-head .ev-alert-title{flex:1;color:#e6edf3;font-weight:600}
+.ev-alert-head .ev-alert-caret{color:#8b949e;font-size:14px;transition:transform .15s}
+.ev-alert-card.expanded .ev-alert-caret{transform:rotate(90deg)}
+.ev-alert-body{display:none;padding:10px 12px;background:#0d1117}
+.ev-alert-card.expanded .ev-alert-body{display:block}
+.ev-alert-body p{margin:0 0 8px;color:#c9d1d9;font-size:12px;line-height:1.5}
+.ev-alert-body pre{
+  margin:0;padding:10px 12px;background:#010409;border:1px solid #21262d;
+  border-radius:4px;font-family:'SF Mono',Menlo,monospace;font-size:11px;
+  line-height:1.5;color:#c9d1d9;overflow:auto;max-height:260px;
+}
+
+/* ── Onboarding Tab ────────────────────────────────────── */
+.onboard-tab-grid{display:grid;grid-template-columns:1fr 1.2fr;gap:20px;align-items:stretch}
+.onboard-tab-info{display:flex;flex-direction:column;justify-content:flex-start}
+.onboard-actions{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.onboard-result-card{
+  background:var(--card);border:1px solid var(--border);border-radius:var(--radius);
+  padding:20px;font-size:12px;box-shadow:var(--shadow);
+}
+.onboard-result-card.empty{
+  display:flex;align-items:center;justify-content:center;
+  color:var(--text-muted);text-align:center;flex-direction:column;gap:10px;
+  min-height:180px;
+}
+.onboard-result-card .empty-icon{font-size:38px;opacity:.5}
+
+/* ── Atlas Activity Monitor (per-entity collapsible code panel) ── */
+.activity-monitor{
+  margin-top:8px;background:#0d1117;border-radius:8px;border:1px solid #30363d;
+  font-family:'SF Mono',Menlo,Consolas,monospace;font-size:11px;line-height:1.6;
+  color:#c9d1d9;overflow:hidden;
+}
+.activity-monitor summary{
+  cursor:pointer;padding:8px 12px;list-style:none;
+  display:flex;align-items:center;justify-content:space-between;gap:10px;
+  background:#161b22;border-bottom:1px solid #30363d;color:#7ee787;
+  font-family:var(--font);font-size:11px;font-weight:600;
+}
+.activity-monitor summary::-webkit-details-marker{display:none}
+.activity-monitor summary::before{
+  content:'▸';color:#7ee787;font-size:11px;transition:transform .15s;margin-right:4px;
+}
+.activity-monitor[open] summary::before{transform:rotate(90deg)}
+.activity-monitor summary:hover{background:#21262d}
+.activity-monitor .am-meta{display:flex;gap:8px;align-items:center;color:#8b949e;font-weight:400}
+.activity-monitor .am-time-badge{background:#1f6feb;color:#fff;padding:1px 8px;border-radius:10px;font-size:10px;font-weight:700}
+.activity-monitor .am-step{padding:12px 14px;border-bottom:1px solid #30363d}
+.activity-monitor .am-step:last-child{border-bottom:none}
+.activity-monitor .am-step-header{
+  display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px;
+  font-family:var(--font);
+}
+.activity-monitor .am-step-title{font-size:11px;font-weight:700;color:#79c0ff;letter-spacing:.3px}
+.activity-monitor .am-step-num{
+  background:#1f6feb;color:#fff;padding:1px 8px;border-radius:10px;font-size:10px;font-weight:700;
+}
+.activity-monitor .am-desc{
+  font-family:var(--font);color:#8b949e;font-size:11px;line-height:1.5;
+  margin-bottom:8px;font-style:italic;
+}
+.activity-monitor .am-code{
+  background:#010409;border-radius:6px;padding:10px 12px;overflow-x:auto;
+  white-space:pre;color:#c9d1d9;font-size:11px;border:1px solid #21262d;
+}
+.activity-monitor .am-code .k{color:#79c0ff}    /* keys */
+.activity-monitor .am-code .s{color:#a5d6ff}    /* strings */
+.activity-monitor .am-code .o{color:#ff7b72}    /* operators ($match, $lookup) */
+.activity-monitor .am-code .n{color:#79c0ff}    /* numbers */
+.activity-monitor .am-results{
+  margin-top:8px;font-family:var(--font);font-size:11px;color:#8b949e;
+  display:flex;justify-content:space-between;align-items:center;
+}
+.activity-monitor .am-results-list{
+  margin-top:6px;background:#010409;border-radius:6px;padding:8px 12px;
+  font-family:'SF Mono',Menlo,monospace;font-size:11px;color:#c9d1d9;
+  max-height:180px;overflow-y:auto;border:1px solid #21262d;
+}
+.activity-monitor .am-results-row{
+  padding:3px 0;border-bottom:1px solid #21262d;
+}
+.activity-monitor .am-results-row:last-child{border-bottom:none}
+.activity-monitor .am-results-row .field{color:#79c0ff}
+.activity-monitor .am-best-practice{
+  margin-top:8px;padding:8px 10px;background:#0d2818;border-left:3px solid #2da44e;
+  border-radius:4px;font-family:var(--font);font-size:11px;color:#aff5b4;line-height:1.5;
+  white-space:pre-line;
+}
+
+/* ── Index transparency: per-step badge + complexity note ─────────── */
+.activity-monitor .am-step.non-pk-step{
+  background:linear-gradient(180deg, rgba(0,237,100,.05) 0%, transparent 100%);
+}
+.activity-monitor .am-non-pk-tag{
+  margin-left:8px;display:inline-block;padding:1px 8px;border-radius:10px;
+  background:#00ed64;color:#000;font-size:9px;font-weight:800;letter-spacing:.4px;
+}
+.activity-monitor .am-index-badge{
+  margin:6px 0 4px;padding:7px 10px;background:#0d2818;border:1px solid #2da44e;
+  border-radius:6px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;
+  font-family:var(--font);font-size:11px;color:#aff5b4;
+}
+.activity-monitor .am-index-badge.non-pk{
+  background:linear-gradient(135deg, #042f1a 0%, #0d2818 100%);
+  border-color:#00ed64;box-shadow:0 0 0 1px rgba(0,237,100,.2);
+}
+.activity-monitor .am-index-badge.secondary{
+  background:#0d1f2a;border-color:#1f6feb;color:#a5d6ff;
+}
+.activity-monitor .am-idx-pill{
+  background:rgba(255,255,255,.08);padding:2px 8px;border-radius:10px;
+  font-size:10px;font-weight:700;letter-spacing:.3px;
+}
+.activity-monitor .am-index-badge code{
+  background:rgba(255,255,255,.06);padding:2px 6px;border-radius:3px;
+  font-family:'SF Mono',Menlo,monospace;font-size:10px;color:#fff;
+}
+.activity-monitor .am-idx-on{font-style:italic;color:#7ee787;opacity:.85;font-size:11px}
+.activity-monitor .am-index-badge.secondary .am-idx-on{color:#79c0ff}
+.activity-monitor .am-idx-callout{
+  background:#00ed64;color:#000;padding:1px 8px;border-radius:8px;
+  font-size:9px;font-weight:800;letter-spacing:.4px;margin-left:auto;
+}
+.activity-monitor .am-idx-note{
+  margin:0 0 4px;padding:6px 10px;background:#010409;border-radius:4px;
+  font-family:var(--font);font-size:10px;color:#8b949e;line-height:1.5;
+  font-style:italic;border-left:2px solid #2da44e;
+}
+.activity-monitor .am-idx-note.muted{border-left-color:#1f6feb;color:#7d8590}
+
+/* ── SQL comparison block ─────────────────────────────────────────── */
+.activity-monitor .am-sql-compare{
+  margin-top:8px;background:#0d1117;border:1px solid #30363d;border-radius:6px;
+  overflow:hidden;
+}
+.activity-monitor .am-sql-compare summary{
+  background:#161b22;color:#f0883e;padding:7px 12px;font-size:11px;
+  font-weight:600;cursor:pointer;list-style:none;font-family:var(--font);
+}
+.activity-monitor .am-sql-compare summary::-webkit-details-marker{display:none}
+.activity-monitor .am-sql-compare summary:hover{background:#21262d}
+.activity-monitor .am-sql-compare summary::before{
+  content:'▸';margin-right:6px;display:inline-block;transition:transform .15s;
+}
+.activity-monitor .am-sql-compare[open] summary::before{transform:rotate(90deg)}
+.activity-monitor .am-sql-body{padding:10px 12px;font-family:var(--font);font-size:11px;color:#c9d1d9}
+.activity-monitor .am-sql-req{
+  margin-bottom:8px;line-height:1.6;color:#8b949e;
+}
+.activity-monitor .am-sql-req span{
+  display:inline-block;padding:2px 7px;background:#21262d;border-radius:3px;
+  margin:0 4px 4px 0;font-size:10px;
+}
+.activity-monitor .am-sql-pre{
+  margin:0;background:#010409;border:1px solid #21262d;border-radius:4px;
+  padding:10px 12px;font-family:'SF Mono',Menlo,monospace;font-size:11px;
+  color:#c9d1d9;overflow-x:auto;line-height:1.5;white-space:pre;
+}
+.activity-monitor .am-sql-diff{
+  margin-top:8px;padding:8px 10px;background:#0d2818;border-left:3px solid #2da44e;
+  border-radius:4px;color:#aff5b4;line-height:1.55;
+}
+
+/* ═══════════════════════════════════════════════════════
+   ARCHITECTURE TAB
+   ═══════════════════════════════════════════════════════ */
+.arch-flow-card{padding:18px}
+.arch-flow{
+  display:grid;grid-template-columns:1fr 1.3fr 0.9fr;gap:16px;
+  position:relative;align-items:stretch;
+}
+@media (max-width:1100px){.arch-flow{grid-template-columns:1fr}}
+.arch-col{
+  background:var(--surface);border:1.5px solid var(--border);border-radius:10px;
+  padding:14px;display:flex;flex-direction:column;gap:10px;
+}
+.arch-col-external{border-color:#94a3b8;background:#f8fafc}
+.arch-col-atlas{
+  border-color:#00ed64;background:linear-gradient(180deg,#f0fdf4 0%,#ecfdf5 100%);
+  box-shadow:0 4px 14px rgba(0,237,100,.12);
+}
+.arch-col-app{border-color:#3b82f6;background:#eff6ff}
+.arch-col-head{display:flex;align-items:center;gap:10px;padding-bottom:8px;border-bottom:1px solid var(--border)}
+.arch-col-icon{font-size:24px}
+.arch-col-title{font-size:13px;font-weight:700;color:var(--text);letter-spacing:.2px}
+.arch-col-sub{font-size:11px;color:var(--text-muted)}
+.arch-cards{display:flex;flex-direction:column;gap:6px;flex:1}
+.arch-card{
+  background:#fff;border:1px solid var(--border);border-left:3px solid #94a3b8;
+  border-radius:6px;padding:8px 10px;cursor:pointer;transition:all .15s;
+  font-size:12px;display:flex;align-items:center;gap:8px;
+}
+.arch-card:hover{transform:translateX(2px);box-shadow:var(--shadow)}
+.arch-card.arch-highlighted{
+  border-color:#00ed64;border-left-color:#00ed64;
+  background:#dcfce7;box-shadow:0 0 0 2px rgba(0,237,100,.3);
+  transform:translateX(2px);
+}
+.arch-col-external .arch-card{border-left-color:#64748b}
+.arch-col-atlas .arch-card{border-left-color:#00b14b;background:#fff}
+.arch-col-atlas .arch-card.arch-highlighted{
+  background:#bbf7d0;border-left-color:#15803d;
+}
+.arch-col-app .arch-card{border-left-color:#3b82f6}
+.arch-card .ac-icon{font-size:16px}
+.arch-card .ac-body{flex:1;min-width:0}
+.arch-card .ac-name{font-weight:600;color:var(--text);font-size:12px}
+.arch-card .ac-meta{font-size:10px;color:var(--text-muted);margin-top:1px}
+.arch-card .ac-count{
+  background:#1f2937;color:#fff;padding:1px 7px;border-radius:10px;
+  font-size:10px;font-weight:700;font-family:'SF Mono',monospace;
+}
+.arch-card.ac-status-field .ac-meta{color:#a16207}
+.arch-card.ac-status-none{opacity:.55;cursor:default}
+.arch-card.ac-status-none:hover{transform:none;box-shadow:none}
+.arch-atlas-badges{
+  display:flex;flex-wrap:wrap;gap:5px;padding-top:8px;border-top:1px solid #bbf7d0;
+}
+.atlas-badge{
+  background:#15803d;color:#fff;padding:2px 8px;border-radius:10px;
+  font-size:10px;font-weight:600;
+}
+.arch-legend{
+  display:flex;align-items:center;flex-wrap:wrap;gap:14px;margin-top:14px;
+  padding-top:12px;border-top:1px solid var(--border);font-size:11px;color:var(--text-muted);
+}
+.arch-legend span{display:flex;align-items:center;gap:5px}
+.arch-dot{width:10px;height:10px;border-radius:50%;display:inline-block;border:2px solid}
+.arch-dot.live{background:#00ed64;border-color:#00b14b}
+.arch-dot.field{background:#fbbf24;border-color:#d97706}
+.arch-dot.none{background:#e5e7eb;border-color:#9ca3af}
+
+/* ── Section B: comparison ─────────────────────────────── */
+.arch-advantage-card{padding:18px}
+.arch-compare{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media (max-width:1100px){.arch-compare{grid-template-columns:1fr}}
+.arch-compare-side{
+  background:#0d1117;border-radius:10px;overflow:hidden;
+  border:1px solid #30363d;display:flex;flex-direction:column;
+}
+.arch-postgres{border-color:#7c3aed}
+.arch-mongodb{border-color:#00ed64;box-shadow:0 4px 14px rgba(0,237,100,.18)}
+.arch-compare-head{
+  display:flex;align-items:center;gap:10px;padding:12px 14px;
+  background:linear-gradient(180deg,#161b22 0%,#0d1117 100%);
+  border-bottom:1px solid #30363d;
+}
+.arch-postgres .arch-compare-head{border-bottom-color:#7c3aed}
+.arch-mongodb .arch-compare-head{border-bottom-color:#00ed64}
+.arch-compare-logo{font-size:24px}
+.arch-compare-title{font-size:13px;font-weight:700;color:#e6edf3}
+.arch-compare-sub{font-size:11px;color:#8b949e}
+.arch-sql, .arch-mongo-doc{
+  margin:0;padding:14px;font-family:'SF Mono',Menlo,Consolas,monospace;
+  font-size:11px;line-height:1.65;color:#c9d1d9;
+  overflow-x:auto;flex:1;background:#0d1117;
+}
+.arch-sql .c, .arch-mongo-doc .c{color:#6b7280;font-style:italic}
+.arch-sql .o, .arch-mongo-doc .o{color:#ff7b72;font-weight:600}
+.arch-sql .t, .arch-mongo-doc .t{color:#d2a8ff}
+.arch-sql .k, .arch-mongo-doc .k{color:#79c0ff}
+.arch-sql .s, .arch-mongo-doc .s{color:#a5d6ff}
+.arch-sql .n, .arch-mongo-doc .n{color:#79c0ff}
+.arch-compare-stats{
+  display:flex;flex-wrap:wrap;gap:6px;padding:10px 14px;
+  background:#161b22;border-top:1px solid #30363d;
+}
+.ac-stat{
+  background:#21262d;color:#c9d1d9;padding:3px 10px;border-radius:10px;
+  font-size:11px;font-family:var(--font);
+}
+.ac-stat strong{color:#fff;font-weight:700}
+.ac-stat.green{background:#0d2818;color:#aff5b4;border:1px solid #15803d}
+.ac-stat.green strong{color:#dcfce7}
+
+/* Benefits grid */
+.arch-benefits{margin-top:18px}
+.arch-benefits-head{
+  font-size:13px;font-weight:700;color:var(--text);margin-bottom:10px;
+}
+.arch-benefits-grid{
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:10px;
+}
+.arch-benefit{
+  display:flex;gap:10px;background:var(--surface);border-radius:8px;
+  padding:10px 12px;border-left:3px solid #00ed64;
+}
+.ab-icon{font-size:22px;line-height:1.2;flex-shrink:0}
+.arch-benefit strong{font-size:12px;color:var(--text);display:block;margin-bottom:3px}
+.arch-benefit p{font-size:11px;color:var(--text-muted);margin:0;line-height:1.5}
+.arch-benefit code{
+  background:#1f2937;color:#a5d6ff;padding:1px 5px;border-radius:3px;
+  font-family:'SF Mono',monospace;font-size:10px;
+}
+.arch-benefit a{color:var(--primary);text-decoration:underline}
+
+/* ── Section C: live anatomy ─────────────────────────── */
+.arch-anatomy-card{padding:18px}
+.arch-anatomy-controls{
+  display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap;
+}
+.arch-anatomy-controls select{
+  padding:7px 10px;border:1px solid var(--border);border-radius:6px;
+  background:var(--surface);color:var(--text);font-size:12px;min-width:280px;
+}
+.arch-anatomy-stats{
+  display:flex;flex-wrap:wrap;gap:10px;padding:12px 14px;background:var(--surface);
+  border-radius:8px;margin-bottom:12px;font-size:12px;
+}
+.arch-anatomy-stats .ana-stat{
+  background:#fff;border:1px solid var(--border);padding:6px 12px;border-radius:6px;
+  display:flex;flex-direction:column;gap:2px;
+}
+.arch-anatomy-stats .ana-stat .ana-label{
+  font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--text-muted);font-weight:600;
+}
+.arch-anatomy-stats .ana-stat .ana-value{
+  font-size:14px;font-weight:700;color:var(--text);font-family:'SF Mono',monospace;
+}
+.arch-anatomy-stats .ana-stat.embedding{
+  background:linear-gradient(135deg,#dcfce7 0%,#bbf7d0 100%);border-color:#86efac;
+}
+.arch-anatomy-stats .ana-stat.embedding .ana-value{color:#15803d}
+.arch-doc-display{
+  background:#0d1117;border:1px solid #30363d;border-radius:8px;overflow:hidden;
+}
+.arch-doc-header{
+  padding:10px 14px;background:#161b22;border-bottom:1px solid #30363d;
+  font-family:'SF Mono',Menlo,monospace;font-size:11px;color:#7ee787;
+}
+.arch-doc-body{
+  margin:0;padding:14px;font-family:'SF Mono',Menlo,Consolas,monospace;
+  font-size:11px;line-height:1.6;color:#c9d1d9;overflow-x:auto;
+  max-height:560px;overflow-y:auto;background:#0d1117;
+}
+.arch-doc-body .embedding-hilite{
+  background:rgba(0,237,100,.12);border-left:3px solid #00ed64;
+  padding:2px 6px;margin:2px 0;display:inline-block;border-radius:3px;
+}
+.arch-doc-body .field-label{color:#79c0ff;font-weight:600}
+.arch-doc-body .field-string{color:#a5d6ff}
+.arch-doc-body .field-number{color:#79c0ff}
+.arch-doc-body .field-bool{color:#ff7b72}
+.arch-doc-body .field-comment{color:#6b7280;font-style:italic}
+
+.entity-row{
+  display:flex;justify-content:space-between;align-items:flex-start;gap:10px;
+  padding:8px 12px;background:var(--card);border-radius:6px;margin-bottom:6px;
+  border-left:3px solid var(--border);
+}
+.entity-row.new{border-left-color:var(--accent)}
+.entity-row.fraud_signal{border-left-color:var(--danger);background:#fff5f5}
+.entity-row.emerging{border-left-color:var(--warning);background:#fffbeb}
+.entity-row.identity{border-left-color:var(--primary);background:#f5f7fa}
+.entity-row.watchlist{border-left-color:var(--danger);background:#fff5f5}
+.entity-row .er-label{display:flex;flex-direction:column;gap:3px;flex:1;min-width:0}
+.entity-row .er-key{font-weight:700;font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.4px}
+.entity-row .er-val{font-size:13px;color:var(--text);font-weight:500;word-break:break-word}
+.entity-row .er-reason{font-size:11px;color:var(--text-muted);line-height:1.45;font-style:italic;margin-top:2px}
+.entity-row .er-status{font-size:10px;font-weight:700;padding:4px 9px;border-radius:10px;text-transform:uppercase;white-space:nowrap;letter-spacing:.3px}
+.er-status.new{background:#dcfce7;color:#166534}
+.er-status.fraud_signal{background:#fee2e2;color:#991b1b}
+.er-status.emerging{background:#fef3c7;color:#92400e}
+.er-status.identity{background:#e0e7ff;color:#3730a3}
+.er-status.watchlist{background:#fee2e2;color:#991b1b}
+
+/* ── Scoring legend ──────────────────────────────────── */
+.scoring-legend{
+  background:#f8fafc;border:1px solid var(--border);border-radius:8px;
+  padding:10px 12px;margin-bottom:12px;font-size:11px;
+}
+.scoring-legend summary{cursor:pointer;font-weight:600;color:var(--text);list-style:none;display:flex;align-items:center;gap:6px}
+.scoring-legend summary::-webkit-details-marker{display:none}
+.scoring-legend summary::before{content:'▸';font-size:10px;transition:transform .15s}
+.scoring-legend[open] summary::before{transform:rotate(90deg)}
+.scoring-legend .legend-grid{display:grid;grid-template-columns:auto 1fr;gap:6px 10px;margin-top:8px;align-items:center}
+.scoring-legend .legend-grid .er-status{justify-self:start}
+.extraction-alert{
+  background:#fee2e2;border-left:4px solid var(--danger);border-radius:6px;
+  padding:10px 14px;margin-bottom:8px;font-size:12px;color:#991b1b;line-height:1.5;
+}
+.upload-drop-zone{
+  border:2px dashed var(--border);border-radius:8px;padding:32px 24px;text-align:center;
+  cursor:pointer;transition:all .15s;background:var(--surface);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  flex:1;min-height:180px;
+}
+.upload-drop-zone:hover{border-color:var(--primary);background:#f0f4ff}
+.upload-drop-zone.has-file{border-style:solid;border-color:var(--accent);background:#f0fdf4}
+.upload-drop-zone .ud-icon{font-size:48px;display:block;margin-bottom:12px;line-height:1}
+.upload-drop-zone .ud-label{font-size:13px;color:var(--text-muted);font-weight:500}
+.upload-drop-zone .ud-hint{font-size:11px;color:var(--text-muted);margin-top:6px;opacity:.75}
+.upload-drop-zone input{display:none}
+
+/* ── Modal Dialog ──────────────────────────────────────── */
+.modal-backdrop{
+  position:fixed;inset:0;background:rgba(15,23,42,.55);backdrop-filter:blur(2px);
+  display:flex;align-items:center;justify-content:center;z-index:2000;padding:20px;
+  opacity:0;pointer-events:none;transition:opacity .2s ease;
+}
+.modal-backdrop.open{opacity:1;pointer-events:auto}
+.modal{
+  background:var(--card);border-radius:14px;box-shadow:0 25px 80px rgba(0,0,0,.4);
+  max-width:1080px;width:100%;max-height:90vh;display:flex;flex-direction:column;
+  overflow:hidden;transform:translateY(20px) scale(.97);transition:transform .25s ease;
+}
+.modal-backdrop.open .modal{transform:translateY(0) scale(1)}
+.modal-header{
+  padding:16px 24px;border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;
+  background:linear-gradient(135deg,var(--primary) 0%,var(--primary-light) 100%);color:#fff;
+}
+.modal-header h2{font-size:16px;font-weight:700;display:flex;align-items:center;gap:10px}
+.modal-header .modal-badge{font-size:10px;padding:3px 10px;border-radius:10px;background:rgba(255,255,255,.2);font-weight:600}
+.modal-close{
+  background:rgba(255,255,255,.15);border:none;font-size:18px;color:#fff;
+  width:32px;height:32px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;
+  transition:background .15s;
+}
+.modal-close:hover{background:rgba(255,255,255,.3)}
+.modal-body{padding:20px 24px;overflow-y:auto;flex:1}
+.modal-subhead{font-size:13px;color:var(--text-muted);line-height:1.6;margin-bottom:16px}
+
+/* When modal is open, dim the trigger button slightly */
+body.modal-open{overflow:hidden}
+
+/* ── Edge Inspector Panel (provenance "Why?") ─────────── */
+.edge-inspector{
+  position:absolute;top:16px;right:16px;width:300px;background:var(--card);
+  border-radius:8px;box-shadow:var(--shadow-lg);padding:14px;font-size:12px;
+  border:1px solid var(--border);z-index:5;
+}
+.edge-inspector .ei-close{position:absolute;top:6px;right:8px;background:none;border:none;font-size:16px;color:var(--text-muted);cursor:pointer}
+.edge-inspector h4{font-size:13px;margin-bottom:10px;color:var(--text)}
+.edge-inspector .ei-key{font-weight:700;color:var(--text-muted);font-size:10px;text-transform:uppercase;letter-spacing:.3px;margin-top:8px}
+.edge-inspector .ei-val{color:var(--text);font-size:12px;word-break:break-word;font-family:'SF Mono',Menlo,monospace;background:var(--surface);padding:6px 8px;border-radius:4px;margin-top:2px}
+
 /* ── Responsive ────────────────────────────────────────── */
+@media(max-width:980px){
+  .onboard-tab-grid{grid-template-columns:1fr}
+}
 @media(max-width:768px){
   .sidebar{display:none}
   .main{padding:16px}
@@ -390,9 +1222,18 @@ tr:hover{background:var(--surface)}
       <div class="nav-item" onclick="showEmpTab('intel')"><span class="icon">🎯</span>Customer Intelligence</div>
     </div>
     <div class="nav-group">
+      <div class="nav-group-title">Investigations</div>
+      <div class="nav-item" onclick="showEmpTab('graph')"><span class="icon">🕸️</span>Graph Network</div>
+      <div class="nav-item" onclick="showEmpTab('onboard')"><span class="icon">📤</span>Document Onboarding</div>
+    </div>
+    <div class="nav-group">
       <div class="nav-group-title">Analytics</div>
       <div class="nav-item" onclick="showEmpTab('analytics')"><span class="icon">📈</span>Dashboard</div>
       <div class="nav-item" onclick="showEmpTab('askdata')"><span class="icon">🤖</span>Ask Your Data</div>
+    </div>
+    <div class="nav-group">
+      <div class="nav-group-title">Reference</div>
+      <div class="nav-item" onclick="showEmpTab('arch')"><span class="icon">🏗️</span>Architecture</div>
     </div>
     <div class="nav-group" style="margin-top:auto;padding:20px 24px">
       <div style="background:#e8eaf6;border-radius:8px;padding:14px;font-size:12px;color:var(--primary)">
@@ -627,6 +1468,421 @@ tr:hover{background:var(--surface)}
       </div>
 
       <div id="intelResult" class="hidden" style="margin-top:16px"></div>
+    </div>
+
+    <!-- Graph / Network Analysis Tab -->
+    <div id="tab-graph" class="hidden">
+      <h2 class="section-title">🕸️ Investigator — Graph Network Analysis</h2>
+      <p class="section-subtitle">Ask in plain English. A <strong>LangGraph</strong> state machine classifies intent, resolves entities, plans a <strong>MongoDB <code>$graphLookup</code></strong>, executes it, and writes a grounded narrative — all backed by <strong>Amazon Bedrock (Claude)</strong>. The graph pivots live, and the full orchestration trace is shown below.</p>
+
+      <!-- Auto-detected risk alerts (unchanged) -->
+      <div id="riskAlertsCard" class="risk-alerts hidden">
+        <div class="risk-alerts-header">
+          <span class="pulse"></span>
+          <span id="riskAlertsTitle">Loading risk alerts ...</span>
+        </div>
+        <div class="risk-alerts-list" id="riskAlertsList"></div>
+      </div>
+
+      <!-- ─────────── Side-by-side: chat + graph ─────────── -->
+      <div class="investigator-grid">
+        <!-- LEFT: chat -->
+        <div class="card">
+          <div class="card-header"><h3>💬 Investigator Chat</h3><span class="badge badge-info">LangGraph + $graphLookup</span></div>
+          <p style="font-size:12px;color:var(--text-muted);margin-bottom:10px">The graph on the right pivots automatically as you ask follow-up questions.</p>
+          <div class="investigator-chat" style="flex:1;display:flex;flex-direction:column">
+            <div id="chatHistory" class="chat-history"></div>
+            <div class="chat-input-row">
+              <input type="text" id="graphChatInput" placeholder="e.g. tell me more about CUST-00007, seems suspicious"
+                     onkeydown="if(event.key==='Enter')sendInvestigateQuery()" autocomplete="off">
+              <button class="btn btn-primary" onclick="sendInvestigateQuery()" id="graphChatBtn">
+                <span class="spinner hidden" id="graphChatSpinner"></span>
+                Send
+              </button>
+            </div>
+            <div class="chat-suggestions">
+              <button class="chat-suggestion" onclick="askChat(this)">Tell me more about CUST-00007 — seems suspicious</button>
+              <button class="chat-suggestion" onclick="askChat(this)">Why is he flagged? what kind of high risk activities are there?</button>
+              <button class="chat-suggestion" onclick="askChat(this)">Show me the AML layering chain</button>
+              <button class="chat-suggestion" onclick="askChat(this)">Who's the ghost beneficiary?</button>
+              <button class="chat-suggestion" onclick="askChat(this)" style="border-color:#22c55e;color:#15803d">📋 Where is this data stored? Show me the raw document</button>
+              <button class="chat-suggestion" onclick="askChat(this)" style="border-color:#22c55e;color:#15803d">📋 How do you know about the AML flag?</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- RIGHT: graph (clean, no header/toolbar) -->
+        <div class="card inv-graph-card">
+          <!-- Hidden helpers kept so legacy handlers (alert-focus, double-click drill) keep working -->
+          <select id="graphDepthSelect" class="hidden" aria-hidden="true">
+            <option value="2" selected>Depth 2</option>
+          </select>
+          <input type="hidden" id="graphSearchInput" value="">
+          <div id="graphSearchResults" class="entity-search-results hidden"></div>
+
+          <div id="graphContainer" class="graph-container empty"></div>
+
+          <div class="graph-legend" id="graphLegend">
+            <div class="lg-item"><span class="lg-dot" style="background:#1a237e"></span>Customer</div>
+            <div class="lg-item"><span class="lg-dot" style="background:#0d47a1"></span>Account</div>
+            <div class="lg-item"><span class="lg-dot" style="background:#7b1fa2"></span>Loan</div>
+            <div class="lg-item"><span class="lg-dot" style="background:#00897b"></span>Policy</div>
+            <div class="lg-item"><span class="lg-dot" style="background:#ef4444"></span>Address</div>
+            <div class="lg-item"><span class="lg-dot" style="background:#dc2626"></span>Device</div>
+            <div class="lg-item"><span class="lg-dot" style="background:#06b6d4"></span>Counterparty</div>
+          </div>
+
+          <div class="inv-graph-footer">
+            <button class="btn btn-outline" id="resetGraphBtn" onclick="resetGraphToOverview()"
+                    title="Reset the graph back to the full sampled overview (no AI call). Useful between investigations.">
+              🌐 Show all relationships
+            </button>
+            <div class="inv-graph-info">
+              <span id="graphInfoText" class="inv-info-text">no query yet</span>
+              <span class="time-badge hidden" id="graphInfoTime"></span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ─────────── LangGraph "Under the Hood" trace ─────────── -->
+      <div class="card langgraph-panel hidden" id="langgraphPanel">
+        <div class="card-header">
+          <h3>🔬 Under the Hood — LangGraph orchestration trace</h3>
+          <span class="badge badge-info" id="langgraphTotalBadge">—</span>
+        </div>
+        <p style="font-size:12px;color:var(--text-muted);margin-bottom:10px">
+          Six-node state machine: each node runs sequentially and writes to shared state. Click any node to inspect its input, output and the actual Python code that executed.
+        </p>
+        <div class="lg-flow" id="langgraphFlow"></div>
+        <div class="lg-panel-summary" id="langgraphSummary"></div>
+        <div id="langgraphSteps"></div>
+      </div>
+
+      <!-- ─────────── Evidence — every claim grounded in MongoDB ─────────── -->
+      <div class="card evidence-panel hidden" id="evidencePanel">
+        <div class="card-header">
+          <h3>📋 Evidence — every claim grounded in MongoDB</h3>
+          <span class="badge badge-info" id="evidenceSourceBadge">—</span>
+        </div>
+        <div class="evidence-banner">
+          <span class="ev-icon">🔒</span>
+          <span>This panel proves the narrative above is not a hallucination. Every flag, count, and number in the answer maps to a specific MongoDB document field or aggregation pipeline — both shown here verbatim.</span>
+        </div>
+        <div id="evidenceContent"></div>
+      </div>
+
+      <!-- Legacy pipeline card (hidden; trace replaces it) -->
+      <div class="card hidden" id="graphPipelineCard">
+        <div class="card-header"><h3>$graphLookup Pipeline</h3><span class="badge badge-info">MongoDB Aggregation</span></div>
+        <div class="graph-pipeline" id="graphPipelineCode"></div>
+      </div>
+
+      <!-- Legacy narrative card (hidden; chat replaces it) -->
+      <div id="graphNarrative" class="graph-narrative hidden"></div>
+    </div>
+
+    <!-- Document Onboarding Tab -->
+    <div id="tab-onboard" class="hidden">
+      <h2 class="section-title">📤 Document Onboarding</h2>
+      <p class="section-subtitle">Upload a national ID, passport scan, or insurance policy. <strong>Bedrock Claude (multimodal)</strong> identifies the document type and extracts every entity; <strong>MongoDB</strong> resolves each one with indexed equality lookups + <code>$lookup</code> sub-pipelines, surfacing fraud-ring membership before onboarding completes.</p>
+
+      <div class="card">
+        <div class="card-header">
+          <h3>Upload Document</h3>
+          <span class="badge badge-info">Bedrock + (type, normalized_label) index</span>
+        </div>
+        <div class="onboard-tab-grid">
+          <label class="upload-drop-zone" id="onboardDropZone">
+            <span class="ud-icon">📄</span>
+            <span class="ud-label" id="onboardFileLabel">Click to choose a PDF, PNG or JPG</span>
+            <span class="ud-hint">max 8 MB · supported types: PDF, PNG, JPG, WEBP</span>
+            <input type="file" id="onboardFile" accept=".pdf,.png,.jpg,.jpeg,.webp" onchange="onOnboardFile(this)">
+          </label>
+          <div class="onboard-tab-info">
+            <p style="font-size:12px;color:var(--text-muted);line-height:1.55;margin-bottom:10px">
+              💡 Sample documents are in <code>data/sample_documents/</code> &mdash; three NRIC cards (high/medium risk + clean), one Cambodian passport, and two insurance policies (one with a ghost-beneficiary signal).
+            </p>
+            <p style="font-size:12px;color:var(--text-muted);line-height:1.55;margin-bottom:0">
+              Each upload runs Claude OCR &rarr; entity extraction &rarr; one MongoDB aggregation per attribute (indexed match + <code>$lookup</code> fan-out). The full activity log appears below.
+            </p>
+            <div class="onboard-actions" style="margin-top:14px">
+              <button class="btn btn-primary" onclick="extractAndMap()" id="onboardBtn" disabled>
+                <span class="spinner hidden" id="onboardSpinner"></span>
+                Extract &amp; Map to Graph
+              </button>
+              <button class="btn btn-outline" onclick="resetExtractions()" style="font-size:11px">↺ Reset auto-extracted</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="onboardResult" class="onboard-result-card empty">
+        <span class="empty-icon">🔍</span>
+        <span>Upload a document above to see extraction, matches against the live graph, the actual MongoDB queries that were executed, and any fraud-ring alerts triggered.</span>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════ -->
+    <!-- ARCHITECTURE TAB                                    -->
+    <!-- ═══════════════════════════════════════════════════ -->
+    <div id="tab-arch" class="hidden">
+      <h2 class="section-title">🏗️ Architecture — MongoDB Atlas as the Operational Data Layer</h2>
+      <p class="section-subtitle">
+        How data flows in this demo and how it would flow in production. MongoDB sits in the middle as the unified operational + search + vector + graph layer — replacing 3-5 separate systems in a typical bank's stack.
+      </p>
+
+      <!-- ─────────── Section A: 3-column data-flow diagram ─────────── -->
+      <div class="card arch-flow-card">
+        <div class="card-header">
+          <h3>Data Flow — External Sources → MongoDB Atlas → Application</h3>
+          <span class="badge badge-info">click any card to highlight its mapping</span>
+        </div>
+        <p style="font-size:12px;color:var(--text-muted);margin-bottom:14px">
+          Some external systems in this demo are <strong>simulated as fields</strong> on existing documents (e.g. OFAC watchlist hits live in <code>network_graph.metadata.watchlist</code>); others are <strong>fully modelled as their own collections</strong> (e.g. <code>kyc_documents</code>). The right column shows the application layer that reads from Atlas.
+        </p>
+
+        <div class="arch-flow">
+          <!-- External Sources column -->
+          <div class="arch-col arch-col-external">
+            <div class="arch-col-head">
+              <span class="arch-col-icon">🌐</span>
+              <div>
+                <div class="arch-col-title">Upstream Systems</div>
+                <div class="arch-col-sub">(simulated in this demo)</div>
+              </div>
+            </div>
+            <div class="arch-cards" id="archExternalCards"><!-- populated by JS --></div>
+          </div>
+
+          <!-- Atlas column -->
+          <div class="arch-col arch-col-atlas">
+            <div class="arch-col-head">
+              <span class="arch-col-icon">🍃</span>
+              <div>
+                <div class="arch-col-title">MongoDB Atlas</div>
+                <div class="arch-col-sub" id="archAtlasSub">banking · <span id="archCollCount">…</span> collections</div>
+              </div>
+            </div>
+            <div class="arch-cards arch-cards-atlas" id="archAtlasCards"><!-- populated by JS --></div>
+            <div class="arch-atlas-badges">
+              <span class="atlas-badge">$lookup • $graphLookup</span>
+              <span class="atlas-badge">Compound indexes</span>
+              <span class="atlas-badge">Atlas Vector Search</span>
+              <span class="atlas-badge">Atlas Search (full-text)</span>
+            </div>
+          </div>
+
+          <!-- Application column -->
+          <div class="arch-col arch-col-app">
+            <div class="arch-col-head">
+              <span class="arch-col-icon">🖥️</span>
+              <div>
+                <div class="arch-col-title">Application</div>
+                <div class="arch-col-sub">FastAPI + LangGraph + Bedrock</div>
+              </div>
+            </div>
+            <div class="arch-cards" id="archAppCards"><!-- populated by JS --></div>
+          </div>
+        </div>
+
+        <div class="arch-legend">
+          <span><span class="arch-dot live"></span>Modelled as its own collection</span>
+          <span><span class="arch-dot field"></span>Simulated as a metadata field</span>
+          <span><span class="arch-dot none"></span>Not modelled (would stream via Atlas Triggers / Change Streams / Kafka)</span>
+          <button class="btn btn-outline" style="margin-left:auto;font-size:11px;padding:5px 10px" onclick="archClearHighlight()">↺ Clear highlights</button>
+        </div>
+      </div>
+
+      <!-- ─────────── Section B: Single-Document Advantage ─────────── -->
+      <div class="card arch-advantage-card">
+        <div class="card-header">
+          <h3>🏆 Why MongoDB? The Single-Document Advantage</h3>
+          <span class="badge badge-info">vs SQL Server / PostgreSQL</span>
+        </div>
+        <p style="font-size:12px;color:var(--text-muted);margin-bottom:16px">
+          Same customer (<strong>CUST-00007</strong>), same data, two schemas. The relational world fragments one customer into rows across 6+ tables — including a separate vector embeddings table or external vector DB. MongoDB keeps it all in one document.
+        </p>
+
+        <div class="arch-compare">
+          <!-- PostgreSQL side -->
+          <div class="arch-compare-side arch-postgres">
+            <div class="arch-compare-head">
+              <span class="arch-compare-logo">🐘</span>
+              <div>
+                <div class="arch-compare-title">PostgreSQL / SQL Server</div>
+                <div class="arch-compare-sub">6+ tables · 2-3 JOINs per read · separate vector store</div>
+              </div>
+            </div>
+            <pre class="arch-sql"><span class="c">-- 1) Master customer record</span>
+INSERT INTO <span class="t">customers</span> (id, name, credit_score, monthly_income, employment_type)
+  VALUES ('CUST-00007', 'Vann Vanna', 623, 5530, 'business_owner');
+
+<span class="c">-- 2) Compliance flags (separate table, normalized)</span>
+INSERT INTO <span class="t">compliance_flags</span> (customer_id, watchlist, aml_flag, reviewed_at)
+  VALUES ('CUST-00007', true, true, now());
+
+<span class="c">-- 3-7) One junction-table row per relationship</span>
+INSERT INTO <span class="t">customer_accounts</span>      (customer_id, account_id) ...;  <span class="c">-- 3 rows</span>
+INSERT INTO <span class="t">customer_loans</span>         (customer_id, loan_id, role) ...;  <span class="c">-- 1 row</span>
+INSERT INTO <span class="t">loan_guarantors</span>        (customer_id, loan_id) ...;  <span class="c">-- 5 rows</span>
+INSERT INTO <span class="t">policy_beneficiaries</span>   (customer_id, policy_id) ...;  <span class="c">-- 6 rows</span>
+INSERT INTO <span class="t">employments</span>            (customer_id, employer_id) ...;  <span class="c">-- 1 row</span>
+
+<span class="c">-- 8) Vector embeddings (with pgvector extension, or external Pinecone)</span>
+INSERT INTO <span class="t">customer_embeddings</span> (customer_id, embedding)
+  VALUES ('CUST-00007', '[0.12, -0.08, ...]'::vector(1024));
+
+<span class="c">-- TO READ a full customer profile + similarity:</span>
+<span class="o">SELECT</span> c.*, cf.*,
+       array_agg(<span class="o">DISTINCT</span> ca.account_id)      AS accounts,
+       array_agg(<span class="o">DISTINCT</span> lg.loan_id)         AS guaranteed_loans,
+       array_agg(<span class="o">DISTINCT</span> pb.policy_id)       AS beneficiary_policies,
+       e.embedding <span class="o">&lt;-&gt;</span> :query_embedding   AS similarity
+<span class="o">FROM</span> <span class="t">customers</span> c
+<span class="o">LEFT JOIN</span> <span class="t">compliance_flags</span> cf      <span class="o">ON</span> cf.customer_id = c.id
+<span class="o">LEFT JOIN</span> <span class="t">customer_accounts</span> ca     <span class="o">ON</span> ca.customer_id = c.id
+<span class="o">LEFT JOIN</span> <span class="t">loan_guarantors</span> lg       <span class="o">ON</span> lg.customer_id = c.id
+<span class="o">LEFT JOIN</span> <span class="t">policy_beneficiaries</span> pb  <span class="o">ON</span> pb.customer_id = c.id
+<span class="o">LEFT JOIN</span> <span class="t">customer_embeddings</span> e    <span class="o">ON</span> e.customer_id = c.id
+<span class="o">WHERE</span> c.id = 'CUST-00007'
+<span class="o">GROUP BY</span> c.id, cf.id, e.embedding;
+<span class="c">-- 6 LEFT JOINs · cross-product before $group · ORM hydration of 5 tables</span>
+<span class="c">-- Atomic update across 6+ tables requires a transaction.</span></pre>
+            <div class="arch-compare-stats">
+              <span class="ac-stat"><strong>8</strong> tables</span>
+              <span class="ac-stat"><strong>17+</strong> INSERT rows</span>
+              <span class="ac-stat"><strong>6</strong> JOINs per read</span>
+              <span class="ac-stat"><strong>2</strong> stores (RDBMS + vector DB)</span>
+            </div>
+          </div>
+
+          <!-- MongoDB side -->
+          <div class="arch-compare-side arch-mongodb">
+            <div class="arch-compare-head">
+              <span class="arch-compare-logo">🍃</span>
+              <div>
+                <div class="arch-compare-title">MongoDB Atlas</div>
+                <div class="arch-compare-sub">1 document · 1 findOne() · embeddings co-located</div>
+              </div>
+            </div>
+            <pre class="arch-mongo-doc"><span class="c">// One document — operational + relationships + embedding all together</span>
+db.<span class="t">network_graph</span>.<span class="o">findOne</span>({_id: <span class="s">"CUST-00007"</span>});
+
+{
+  <span class="k">_id</span>:               <span class="s">"CUST-00007"</span>,
+  <span class="k">type</span>:              <span class="s">"Customer"</span>,
+  <span class="k">label</span>:             <span class="s">"Vann Vanna"</span>,
+  <span class="k">normalized_label</span>:  <span class="s">"vann vanna"</span>,         <span class="c">// indexed for non-PK lookup</span>
+  <span class="k">metadata</span>: {
+    <span class="k">credit_score</span>:        <span class="n">623</span>,
+    <span class="k">monthly_income_usd</span>:  <span class="n">5530</span>,
+    <span class="k">employment_type</span>:     <span class="s">"business_owner"</span>,
+    <span class="k">watchlist</span>:           <span class="n">true</span>,         <span class="c">// ← compliance "table"</span>
+    <span class="k">aml_flag</span>:            <span class="n">true</span>          <span class="c">// ← compliance "table"</span>
+  },
+  <span class="k">relationships</span>: [                       <span class="c">// ← replaces 5 junction tables</span>
+    { target: <span class="s">"ACC-00017"</span>, type: <span class="s">"OWNS_ACCOUNT"</span> },
+    { target: <span class="s">"LOAN-00001"</span>, type: <span class="s">"GUARANTOR_OF"</span> },
+    { target: <span class="s">"LOAN-00005"</span>, type: <span class="s">"GUARANTOR_OF"</span> },
+    { target: <span class="s">"POL-00004"</span>,  type: <span class="s">"BENEFICIARY_OF"</span> },
+    <span class="c">// … 13 more relationships of various types</span>
+  ],
+  <span class="k">embedding</span>: [<span class="n">0.12</span>, -<span class="n">0.08</span>, <span class="n">0.34</span>, … <span class="n">1024</span> dims …]   <span class="c">// ← no separate vector DB</span>
+}
+
+<span class="c">// Multi-hop traversal — replaces 6 LEFT JOINs:</span>
+db.<span class="t">network_graph</span>.<span class="o">aggregate</span>([
+  { <span class="o">$match</span>:       { _id: <span class="s">"CUST-00007"</span> } },
+  { <span class="o">$graphLookup</span>: { from: <span class="s">"network_graph"</span>, startWith: <span class="s">"$relationships.target"</span>,
+                    connectFromField: <span class="s">"relationships.target"</span>,
+                    connectToField: <span class="s">"_id"</span>, as: <span class="s">"connected"</span>, maxDepth: <span class="n">2</span> } }
+]);
+<span class="c">// Atomic update of any field — single document = single ACID write.</span></pre>
+            <div class="arch-compare-stats">
+              <span class="ac-stat green"><strong>1</strong> collection</span>
+              <span class="ac-stat green"><strong>1</strong> document</span>
+              <span class="ac-stat green"><strong>0</strong> JOINs (embedded arrays)</span>
+              <span class="ac-stat green"><strong>1</strong> store (operational + vector + graph)</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Benefits list -->
+        <div class="arch-benefits">
+          <div class="arch-benefits-head">📊 What the document model gives you</div>
+          <div class="arch-benefits-grid">
+            <div class="arch-benefit">
+              <span class="ab-icon">⚡</span>
+              <div>
+                <strong>One round-trip read</strong>
+                <p>findOne() returns the entire customer profile including the 1024-dim embedding. Postgres needs 6 LEFT JOINs to assemble the same view.</p>
+              </div>
+            </div>
+            <div class="arch-benefit">
+              <span class="ab-icon">🔒</span>
+              <div>
+                <strong>Atomic compliance updates</strong>
+                <p>Flipping <code>metadata.watchlist=true</code> is a single ACID write. The relational equivalent updates <code>compliance_flags</code> in a transaction across multiple tables.</p>
+              </div>
+            </div>
+            <div class="arch-benefit">
+              <span class="ab-icon">🧬</span>
+              <div>
+                <strong>Embeddings co-located</strong>
+                <p>The 1024-dim Voyage AI embedding lives on the same document as the operational data. No separate vector DB to sync. Atlas Vector Search runs against the same collection.</p>
+              </div>
+            </div>
+            <div class="arch-benefit">
+              <span class="ab-icon">🧩</span>
+              <div>
+                <strong>Schema flexibility</strong>
+                <p>Adding a new compliance signal (<code>metadata.pep_status</code>) costs zero migrations. PostgreSQL requires an ALTER TABLE locking the row at scale.</p>
+              </div>
+            </div>
+            <div class="arch-benefit">
+              <span class="ab-icon">🕸️</span>
+              <div>
+                <strong>Native graph traversal</strong>
+                <p><code>$graphLookup</code> walks the embedded <code>relationships[]</code> array recursively. PostgreSQL needs a recursive CTE or external graph DB.</p>
+              </div>
+            </div>
+            <div class="arch-benefit">
+              <span class="ab-icon">🔑</span>
+              <div>
+                <strong>Any field is a key</strong>
+                <p>The compound index on <code>(type, normalized_label)</code> makes addresses, phones, devices, employers all sub-millisecond. Demonstrated live in <a href="#" onclick="showEmpTab('onboard');return false;">Document Onboarding</a>.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ─────────── Section C: Live document anatomy ─────────── -->
+      <div class="card arch-anatomy-card">
+        <div class="card-header">
+          <h3>🔬 Live Document Anatomy — see a real document with its embedding</h3>
+          <span class="badge badge-info">fetched live from the cluster</span>
+        </div>
+        <p style="font-size:12px;color:var(--text-muted);margin-bottom:12px">
+          Pick a collection — we'll fetch one real document and show its anatomy: operational fields + relationships + the 1024-dim Voyage AI embedding, all in the same BSON record.
+        </p>
+        <div class="arch-anatomy-controls">
+          <label style="font-size:12px;color:var(--text-muted)">Collection:</label>
+          <select id="archAnatomyCollection" onchange="archLoadSample()">
+            <option value="kyc_documents">kyc_documents (operational + embedding)</option>
+            <option value="bank_products">bank_products (operational + embedding)</option>
+            <option value="network_graph">network_graph (operational + relationships)</option>
+            <option value="customers">customers (operational only)</option>
+            <option value="transactions">transactions (operational only)</option>
+            <option value="faq_chunks">faq_chunks (text + embedding)</option>
+            <option value="insurance_policies">insurance_policies (operational only)</option>
+          </select>
+          <button class="btn btn-outline" onclick="archLoadSample()" style="font-size:11px;padding:5px 12px">↻ Reload</button>
+        </div>
+        <div id="archAnatomyResult"></div>
+      </div>
+
     </div>
 
   </div>
@@ -1443,13 +2699,15 @@ function showCustomerPage(page) {
    EMPLOYEE TABS
    ═══════════════════════════════════════════════════════ */
 function showEmpTab(tab) {
-  ['credit', 'kyc', 'intel', 'analytics', 'askdata'].forEach(t => {
+  ['credit', 'kyc', 'intel', 'analytics', 'askdata', 'graph', 'onboard', 'arch'].forEach(t => {
     const el = $('tab-' + t);
     if (el) el.classList.toggle('hidden', tab !== t);
   });
   document.querySelectorAll('#employeePortal .sidebar .nav-item').forEach(n => n.classList.remove('active'));
   event?.target?.closest?.('.nav-item')?.classList.add('active');
   if (tab === 'analytics') loadAnalytics();
+  if (tab === 'graph' && !graphState.initialized) loadGraphOverview();
+  if (tab === 'arch') loadArchitecture();
 }
 
 /* ═══════════════════════════════════════════════════════
@@ -1859,6 +3117,1461 @@ async function verifyKYC() {
     resultEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
   } catch (e) { alert('Error: ' + e.message); }
   finally { btn.disabled = false; sp.classList.add('hidden'); }
+}
+
+/* ═══════════════════════════════════════════════════════
+   GRAPH / NETWORK ANALYSIS  ($graphLookup + LLM chat)
+   ═══════════════════════════════════════════════════════ */
+const graphState = {
+  initialized: false,
+  network: null,
+  searchTimer: null,
+  chatHistory: [],
+  highlightOverride: new Set(),  // node IDs to flag from the latest chat/alert
+};
+
+const NODE_STYLE = {
+  Customer:        { color: '#1a237e', size: 22, shape: 'dot' },
+  Account:         { color: '#0d47a1', size: 16, shape: 'square' },
+  Loan:            { color: '#7b1fa2', size: 16, shape: 'triangle' },
+  InsurancePolicy: { color: '#00897b', size: 16, shape: 'diamond' },
+  Address:         { color: '#ef4444', size: 18, shape: 'star' },
+  Phone:           { color: '#f59e0b', size: 14, shape: 'star' },
+  Device:          { color: '#dc2626', size: 16, shape: 'star' },
+  Employer:        { color: '#10b981', size: 14, shape: 'hexagon' },
+  Counterparty:    { color: '#06b6d4', size: 12, shape: 'dot' },
+  Unknown:         { color: '#6b7280', size: 12, shape: 'dot' },
+};
+
+function styleFor(type) { return NODE_STYLE[type] || NODE_STYLE.Unknown; }
+
+function nodeTooltip(n) {
+  const m = n.metadata || {};
+  let lines = [`${n.label}`, `Type: ${n.type}`];
+  if (m.credit_score)         lines.push(`Credit score: ${m.credit_score}`);
+  if (m.monthly_income_usd)   lines.push(`Monthly income: $${Math.round(m.monthly_income_usd).toLocaleString()}`);
+  if (m.balance_usd != null)  lines.push(`Balance: $${Math.round(m.balance_usd).toLocaleString()}`);
+  if (m.amount_usd != null)   lines.push(`Amount: $${Math.round(m.amount_usd).toLocaleString()}`);
+  if (m.coverage_usd != null) lines.push(`Coverage: $${Math.round(m.coverage_usd).toLocaleString()}`);
+  if (m.account_type)         lines.push(`Account: ${m.account_type}`);
+  if (m.purpose)              lines.push(`Purpose: ${m.purpose}`);
+  if (m.policy_type)          lines.push(`Policy: ${m.policy_type}`);
+  if (m.shared_by)            lines.push(`Shared by ${m.shared_by} customers`);
+  if (m.watchlist)            lines.push(`⚠ ON WATCHLIST`);
+  if (m.aml_flag)             lines.push(`⚠ AML FLAG`);
+  if (n.hops != null)         lines.push(`Hops from root: ${n.hops}`);
+  return lines.join('\n');
+}
+
+function renderGraph(nodesData, edgesData) {
+  const container = $('graphContainer');
+  container.classList.remove('empty');
+
+  const nodes = new vis.DataSet((nodesData || []).map(n => {
+    const s = styleFor(n.type);
+    const meta = n.metadata || {};
+    // A node is flagged if (a) backend says so via risk_flagged, or
+    // (b) its metadata carries watchlist/aml_flag/shared_by, or
+    // (c) it's in the highlightOverride from chat/alert click.
+    const flagged = !!(
+      n.risk_flagged ||
+      meta.watchlist || meta.aml_flag ||
+      (meta.shared_by && meta.shared_by >= 2) ||
+      graphState.highlightOverride.has(n.id)
+    );
+    return {
+      id: n.id,
+      label: (n.label || n.id).length > 24 ? (n.label || n.id).slice(0, 22) + '…' : (n.label || n.id),
+      title: nodeTooltip(n) + (flagged ? '\n⚠ HIGH RISK ALERT' : ''),
+      color: {
+        background: n.is_root ? '#fbbf24' : (flagged ? '#fee2e2' : s.color),
+        border: flagged ? '#dc2626' : (n.is_root ? '#000' : s.color),
+        highlight: { background: '#fff', border: flagged ? '#dc2626' : s.color },
+      },
+      borderWidth: flagged ? 4 : (n.is_root ? 3 : 1.5),
+      shape: n.is_root ? 'star' : s.shape,
+      size: n.is_root ? 30 : (s.size + (flagged ? 6 : 0)),
+      font: {
+        color: flagged ? '#991b1b' : '#e6edf3',
+        size: n.is_root ? 14 : (flagged ? 12 : 11),
+        bold: !!(n.is_root || flagged),
+      },
+      opacity: n.hops != null ? Math.max(0.5, 1 - n.hops * 0.15) : 1,
+      shadow: flagged ? { enabled: true, color: 'rgba(220,38,38,.55)', size: 14, x: 0, y: 0 } : undefined,
+    };
+  }));
+
+  const edges = new vis.DataSet((edgesData || []).map((e, i) => ({
+    id: i,
+    from: e.from,
+    to: e.to,
+    label: e.label,
+    title: edgeTooltip(e) + (e.source ? '\n📁 Source: ' + e.source + '\n(click for details)' : ''),
+    color: { color: '#3a3f55', highlight: '#00c853', opacity: 0.55 },
+    font: { color: '#8b949e', size: 8, strokeWidth: 0, align: 'middle' },
+    arrows: { to: { enabled: true, scaleFactor: 0.4 } },
+    smooth: { type: 'continuous', roundness: 0.2 },
+    // Pass through provenance + metadata for the edge inspector panel
+    source_provenance: e.source,
+    amount_usd: e.amount_usd,
+    transaction_count: e.transaction_count,
+    total_amount_usd: e.total_amount_usd,
+    date: e.date,
+    chain_step: e.chain_step,
+    description: e.description,
+  })));
+
+  if (graphState.network) graphState.network.destroy();
+  graphState.network = new vis.Network(container, { nodes, edges }, {
+    physics: {
+      forceAtlas2Based: {
+        gravitationalConstant: -45, centralGravity: 0.005,
+        springLength: 140, springConstant: 0.025, damping: 0.4,
+      },
+      solver: 'forceAtlas2Based',
+      stabilization: { iterations: 200 },
+    },
+    interaction: { hover: true, tooltipDelay: 200, zoomView: true, dragView: true },
+    nodes: { shadow: { enabled: true, color: 'rgba(0,0,0,.25)', size: 5 } },
+    edges: { width: 1.4 },
+  });
+
+  graphState.network.on('doubleClick', params => {
+    if (params.nodes.length > 0) loadEntityGraph(params.nodes[0]);
+  });
+
+  // Single click on an edge → show provenance inspector
+  graphState.network.on('click', params => {
+    if (params.edges.length > 0 && params.nodes.length === 0) {
+      showEdgeInspector(params.edges[0]);
+    } else {
+      // clicked elsewhere → close inspector
+      document.querySelectorAll('.edge-inspector').forEach(el => el.remove());
+    }
+  });
+
+  graphState.initialized = true;
+}
+
+function edgeTooltip(e) {
+  let parts = [e.label];
+  if (e.amount_usd != null)        parts.push(`$${Number(e.amount_usd).toLocaleString()}`);
+  if (e.transaction_count)         parts.push(`${e.transaction_count} txns`);
+  if (e.total_amount_usd != null)  parts.push(`Total $${Number(e.total_amount_usd).toLocaleString()}`);
+  if (e.date)                      parts.push(e.date);
+  if (e.chain_step != null)        parts.push(`step ${e.chain_step}`);
+  return parts.join(' • ');
+}
+
+function showGraphInfo(text, ms) {
+  // The text element is always present (in old layout inside #graphInfo,
+  // in new investigator layout as a plain span). The time-badge is optional.
+  const txt = $('graphInfoText');
+  if (txt) txt.textContent = text;
+  const time = $('graphInfoTime');
+  if (time) {
+    time.textContent = (ms != null) ? `${ms} ms` : '';
+    time.classList.toggle('hidden', ms == null);
+  }
+  // Legacy wrapper if present (old graph tab layout)
+  const wrap = $('graphInfo');
+  if (wrap) wrap.classList.remove('hidden');
+}
+
+function showGraphNarrative(text) {
+  if (!text) { $('graphNarrative').classList.add('hidden'); return; }
+  $('graphNarrative').classList.remove('hidden');
+  $('graphNarrative').innerHTML = `<strong>📖 Investigator's note:</strong> ${text}`;
+}
+
+function showGraphPipeline(pipelineUsed) {
+  if (!pipelineUsed) { $('graphPipelineCard').classList.add('hidden'); return; }
+  $('graphPipelineCard').classList.remove('hidden');
+  const stages = pipelineUsed.stages || [];
+  $('graphPipelineCode').textContent = JSON.stringify(stages, null, 2);
+}
+
+function fitGraph() {
+  if (graphState.network) graphState.network.fit({ animation: { duration: 500 } });
+}
+
+async function loadGraphOverview() {
+  try {
+    graphState.highlightOverride.clear();
+    const r = await fetch('/api/graph/overview?sample_size=180');
+    const d = await r.json();
+    if (d.error) {
+      $('graphContainer').classList.add('empty');
+      showGraphInfo(d.error, 0);
+      return;
+    }
+    renderGraph(d.nodes, d.edges);
+    showGraphNarrative(null);
+    showGraphPipeline(null);
+    showGraphInfo(`Sampled overview: ${d.nodes.length} nodes, ${d.edges.length} edges • ${d.flagged_count || 0} flagged (out of ${d.total_nodes_in_db} total)`, d.query_time_ms);
+    renderRiskAlerts(d.alerts || []);
+  } catch (e) { console.error(e); alert('Could not load graph overview: ' + e.message); }
+}
+
+function renderRiskAlerts(alerts) {
+  const card = $('riskAlertsCard');
+  const list = $('riskAlertsList');
+  const titleEl = $('riskAlertsTitle');
+  if (!alerts || alerts.length === 0) {
+    card.classList.add('hidden');
+    return;
+  }
+  const high = alerts.filter(a => a.severity === 'high').length;
+  const med = alerts.filter(a => a.severity === 'medium').length;
+  titleEl.textContent =
+    `${alerts.length} risk pattern${alerts.length === 1 ? '' : 's'} detected — ${high} high, ${med} medium`;
+  list.innerHTML = alerts.map(a => `
+    <button class="risk-alert-item" onclick='focusAlert(${JSON.stringify(a).replace(/'/g, "&#39;")})'>
+      <span class="ra-title">
+        <span class="ra-severity ${a.severity}">${a.severity}</span>
+        ${a.title}
+      </span>
+      <span class="ra-summary">${a.summary}</span>
+    </button>
+  `).join('');
+  card.classList.remove('hidden');
+}
+
+async function focusAlert(alert) {
+  // Flash-highlight the nodes from this alert and zoom to the focus node
+  graphState.highlightOverride = new Set(alert.highlight_nodes || []);
+  const focus = alert.focus_node;
+  if (focus) {
+    // Pull a $graphLookup centered on the focus node so the user sees the
+    // immediate neighborhood including all linked customers/accounts.
+    await loadEntityGraph(focus, 2);
+    showGraphNarrative(`<strong>⚠ ${alert.title}</strong> — ${alert.summary}`);
+  }
+}
+
+async function loadEntityGraph(entityId, depthOverride) {
+  const depth = depthOverride || $('graphDepthSelect').value;
+  try {
+    const r = await fetch(`/api/graph/entity/${encodeURIComponent(entityId)}?depth=${depth}`);
+    if (!r.ok) {
+      const err = await r.json().catch(() => ({}));
+      alert('Entity not found: ' + (err.detail || entityId));
+      return;
+    }
+    const d = await r.json();
+    renderGraph(d.nodes, d.edges);
+    showGraphNarrative(null);
+    showGraphPipeline(d.pipeline_used);
+    showGraphInfo(`"${d.root_label}" (${d.root_type}) → ${d.total_connected} connected entities at depth ${depth}`, d.query_time_ms);
+  } catch (e) { console.error(e); alert('Error loading entity: ' + e.message); }
+}
+
+/* ═══════════════════════════════════════════════════════
+   INVESTIGATOR CHAT — LLM-driven graph Q&A
+   ═══════════════════════════════════════════════════════ */
+function appendChat(role, content, meta) {
+  const div = document.createElement('div');
+  div.className = 'chat-bubble ' + role;
+  div.innerHTML = content;
+  if (meta) {
+    const m = document.createElement('div');
+    m.className = 'chat-meta';
+    m.innerHTML = meta;
+    div.appendChild(m);
+  }
+  $('chatHistory').appendChild(div);
+  $('chatHistory').scrollTop = $('chatHistory').scrollHeight;
+  return div;
+}
+
+function showTyping() {
+  const div = document.createElement('div');
+  div.className = 'chat-typing';
+  div.id = 'chatTyping';
+  div.innerHTML = '<span class="dot"></span><span class="dot"></span><span class="dot"></span> investigator is thinking ...';
+  $('chatHistory').appendChild(div);
+  $('chatHistory').scrollTop = $('chatHistory').scrollHeight;
+}
+
+function hideTyping() { $('chatTyping')?.remove(); }
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+function askChat(btn) {
+  $('graphChatInput').value = btn.textContent;
+  sendInvestigateQuery();
+}
+
+/* ═══════════════════════════════════════════════════════
+   INVESTIGATOR (v2) — LangGraph orchestrated, side-by-side
+   ═══════════════════════════════════════════════════════ */
+async function sendInvestigateQuery() {
+  const input = $('graphChatInput');
+  const query = input.value.trim();
+  if (!query) return;
+  const btn = $('graphChatBtn');
+  const sp = $('graphChatSpinner');
+  btn.disabled = true; sp.classList.remove('hidden');
+
+  appendChat('user', escapeHtml(query));
+  input.value = '';
+  showTyping();
+
+  // Show the LangGraph panel in "running" state immediately so the
+  // audience sees the orchestration scaffold before results arrive.
+  showLangGraphRunning();
+
+  try {
+    const r = await fetch('/api/graph/investigate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        query,
+        history: graphState.chatHistory,
+      }),
+    });
+    const d = await r.json();
+    hideTyping();
+
+    if (!r.ok) {
+      appendChat('error', '⚠ ' + escapeHtml(d.detail || 'Investigate failed'));
+      $('langgraphPanel').classList.add('hidden');
+      return;
+    }
+
+    // Save turn for history — include entity metadata so the agent's
+    // resolver can pivot on follow-ups like "why is he flagged?"
+    graphState.chatHistory.push({ role: 'user', content: query });
+    graphState.chatHistory.push({
+      role: 'assistant',
+      content: d.narrative || '',
+      meta: { entities: d.entities || [], intent: d.intent?.category }
+    });
+
+    // Build chat-bubble meta footer (compact summary, full trace is below)
+    const intent = d.intent?.category || 'unknown';
+    const intentLabel = ({
+      explore_entity:  '🔍 explore_entity',
+      explain_pattern: '⚠️ explain_pattern',
+      general_question:'💬 general_question',
+    })[intent] || intent;
+    let metaParts = [`<strong>${intentLabel}</strong>`];
+    if ((d.entities || []).length) {
+      metaParts.push(`focus: <code>${d.entities.join(', ')}</code>`);
+    }
+    if (d.pipeline_used) {
+      const depthShown = d.plan?.depth || 2;
+      metaParts.push(`<strong>$graphLookup</strong> depth ${depthShown}`);
+    } else {
+      metaParts.push('<em>no traversal</em>');
+    }
+    metaParts.push(`<span style="color:var(--accent);font-weight:700">${d.total_ms} ms</span>`);
+
+    appendChat('assistant', escapeHtml(d.narrative || '(no response)'), metaParts.join(' • '));
+
+    // Pivot the graph if the executor returned data
+    if ((d.nodes || []).length > 0) {
+      graphState.highlightOverride = new Set(d.highlight_nodes || []);
+      renderGraph(d.nodes, d.edges);
+      // Some browsers don't size the canvas correctly until layout settles;
+      // a tiny redraw forces vis-network to fit to the container.
+      requestAnimationFrame(() => {
+        if (graphState.network) graphState.network.redraw();
+      });
+      const label = d.entities?.[0] || '';
+      showGraphInfo(
+        `${d.nodes.length} nodes • ${d.edges.length} edges` +
+        (label ? ` • root: ${label}` : ''),
+        d.total_ms,
+      );
+    } else {
+      showGraphInfo('no traversal — general question', d.total_ms);
+    }
+
+    // Render the full step trace + the evidence package
+    renderLangGraphTrace(d);
+    renderEvidence(d.evidence, d);
+  } catch (e) {
+    hideTyping();
+    appendChat('error', '⚠ ' + escapeHtml(e.message));
+    $('langgraphPanel').classList.add('hidden');
+    $('evidencePanel').classList.add('hidden');
+  } finally {
+    btn.disabled = false; sp.classList.add('hidden');
+  }
+}
+
+/**
+ * Reset the right-hand graph back to the auto-loaded sample overview.
+ * Pure MongoDB ($graphLookup-free) call to /api/graph/overview — no LLM,
+ * no token spend. The chat history on the left is preserved.
+ */
+async function resetGraphToOverview() {
+  const btn = $('resetGraphBtn');
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ Resetting…'; }
+  try {
+    await loadGraphOverview();      // existing function — fetches /api/graph/overview
+    // Hide the stale LangGraph trace + Evidence panel so the audience isn't
+    // confused: those represent the last investigator question, not this view.
+    $('langgraphPanel')?.classList.add('hidden');
+    $('evidencePanel')?.classList.add('hidden');
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = '🌐 Show all relationships'; }
+  }
+}
+
+function showLangGraphRunning() {
+  const panel = $('langgraphPanel');
+  panel.classList.remove('hidden');
+  $('langgraphTotalBadge').textContent = 'running…';
+  $('langgraphFlow').innerHTML = [
+    'intent_classifier', 'entity_resolver', 'pipeline_planner',
+    'mongo_executor', 'evidence_builder', 'narrative_writer',
+  ].map((n, i, arr) => {
+    const kind = (n === 'mongo_executor') ? 'mongo' :
+                 (n === 'intent_classifier' || n === 'narrative_writer') ? 'llm' : 'logic';
+    return `<span class="lg-node-pill" style="opacity:.4">
+              <span class="lg-kind ${kind}">${kind}</span>${n}
+            </span>` + (i < arr.length - 1 ? '<span class="lg-arrow">→</span>' : '');
+  }).join('');
+  $('langgraphSummary').innerHTML = '';
+  $('langgraphSteps').innerHTML = '';
+  $('evidencePanel').classList.add('hidden');
+}
+
+function renderLangGraphTrace(d) {
+  const panel = $('langgraphPanel');
+  panel.classList.remove('hidden');
+  const steps = d.steps || [];
+  $('langgraphTotalBadge').textContent = `${steps.length} nodes • ${d.total_ms} ms`;
+
+  // Top flow pills (clickable to scroll/expand)
+  $('langgraphFlow').innerHTML = steps.map((s, i, arr) => {
+    const kindCls = s.kind || 'logic';
+    return `<span class="lg-node-pill" onclick="toggleStepCard(${i}, true)" id="lgPill${i}">
+              <span class="lg-kind ${kindCls}">${kindCls}</span>
+              ${s.node}
+              <span class="lg-ms">${s.ms} ms</span>
+            </span>` + (i < arr.length - 1 ? '<span class="lg-arrow">→</span>' : '');
+  }).join('');
+
+  // Summary line (intent, entities, totals)
+  const intent = d.intent?.category || '—';
+  const ents = (d.entities || []).join(', ') || 'none';
+  const llmMs = steps.filter(s => s.kind === 'llm').reduce((a, b) => a + (b.ms || 0), 0);
+  const mongoMs = steps.filter(s => s.kind === 'mongo').reduce((a, b) => a + (b.ms || 0), 0);
+  $('langgraphSummary').innerHTML = `
+    <span><strong>Intent</strong> ${intent}</span>
+    <span class="lg-bullet">•</span>
+    <span><strong>Entities</strong> ${escapeHtml(ents)}</span>
+    <span class="lg-bullet">•</span>
+    <span><strong>LLM time</strong> ${llmMs.toFixed(0)} ms</span>
+    <span class="lg-bullet">•</span>
+    <span><strong>Mongo time</strong> ${mongoMs.toFixed(0)} ms</span>
+    <span class="lg-bullet">•</span>
+    <span class="lg-total">total ${d.total_ms} ms</span>
+  `;
+
+  // Step accordions
+  $('langgraphSteps').innerHTML = steps.map((s, i) => buildStepCard(s, i, d)).join('');
+}
+
+function buildStepCard(s, i, d) {
+  const kindCls = s.kind || 'logic';
+  const kindBadge = `<span class="lg-kind ${kindCls}">${kindCls}</span>`;
+  const inputJson  = JSON.stringify(s.input  ?? null, null, 2);
+  const outputJson = JSON.stringify(s.output ?? null, null, 2);
+  const codeBlock = s.code
+    ? `<div class="lg-step-section">
+         <div class="lg-section-label">Python (actual node source)</div>
+         <pre class="lg-code">${escapeHtml(s.code)}</pre>
+       </div>`
+    : '';
+  // For the mongo executor, also surface the pipeline JSON that was run.
+  const pipelineBlock = (s.node === 'mongo_executor' && d.pipeline_used)
+    ? `<div class="lg-step-section">
+         <div class="lg-section-label">MongoDB aggregation pipeline (executed)</div>
+         <pre>${escapeHtml(JSON.stringify(d.pipeline_used.stages, null, 2))}</pre>
+       </div>`
+    : '';
+  return `
+    <div class="lg-step-card${i === 0 ? ' expanded' : ''}" id="lgStep${i}">
+      <div class="lg-step-head" onclick="toggleStepCard(${i})">
+        <span class="lg-step-num">${i + 1}</span>
+        ${kindBadge}
+        <span class="lg-step-title">${escapeHtml(s.title || s.node)}</span>
+        <span class="lg-step-node">${s.node}</span>
+        <span class="lg-step-ms">${s.ms} ms</span>
+        <span class="lg-step-caret">▸</span>
+      </div>
+      <div class="lg-step-body">
+        <div class="lg-step-section">
+          <div class="lg-section-label">Input (from shared state)</div>
+          <pre>${escapeHtml(inputJson)}</pre>
+        </div>
+        <div class="lg-step-section">
+          <div class="lg-section-label">Output (written to shared state)</div>
+          <pre>${escapeHtml(outputJson)}</pre>
+        </div>
+        ${pipelineBlock}
+        ${codeBlock}
+      </div>
+    </div>`;
+}
+
+function toggleStepCard(i, forceExpand) {
+  const card = $('lgStep' + i);
+  if (!card) return;
+  if (forceExpand) {
+    card.classList.add('expanded');
+    card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  } else {
+    card.classList.toggle('expanded');
+  }
+}
+
+/**
+ * Render the Evidence card — the "proof we didn't hallucinate" panel.
+ * Shows: source collection, raw root document, field-level facts with
+ * their MongoDB source paths, and the actual aggregation pipelines that
+ * triggered any matched risk alert.
+ */
+function renderEvidence(evidence, d) {
+  const panel = $('evidencePanel');
+  if (!evidence || (
+        !evidence.root_document_excerpt &&
+        !(evidence.field_facts || []).length &&
+        !(evidence.alert_provenance || []).length)) {
+    panel.classList.add('hidden');
+    return;
+  }
+  panel.classList.remove('hidden');
+
+  const srcBadge = $('evidenceSourceBadge');
+  srcBadge.textContent = `${evidence.source_collection || 'banking.network_graph'} • ${evidence.mongodb_operation || 'aggregate'}`;
+
+  const sections = [];
+
+  // ─── Root document excerpt ─────────────────────────────
+  const rd = evidence.root_document_excerpt;
+  if (rd) {
+    const sourceLine = `db.${(evidence.source_collection || 'banking.network_graph').split('.').pop()}.findOne({_id: "${rd._id}"})`;
+    sections.push(`
+      <div class="evidence-section">
+        <div class="ev-section-head">📄 Source document (verbatim from MongoDB)</div>
+        <div class="ev-source-line">${escapeHtml(sourceLine)}</div>
+        <div class="ev-doc-block">
+          <pre>${escapeHtml(JSON.stringify(rd, null, 2))}</pre>
+        </div>
+      </div>
+    `);
+  }
+
+  // ─── Field-level facts (expandable cards with provenance) ──
+  const facts = evidence.field_facts || [];
+  if (facts.length) {
+    const provCount = facts.filter(f => f.provenance).length;
+    const cards = facts.map((f, i) => buildFactCard(f, i)).join('');
+    sections.push(`
+      <div class="evidence-section">
+        <div class="ev-section-head">
+          ✓ Field-level facts <span class="ev-count">${facts.length}</span>
+          <span style="color:var(--text-muted);font-weight:400;text-transform:none;letter-spacing:0;margin-left:8px">
+            — every claim maps to a specific field path.
+            ${provCount ? `<strong style="color:#15803d">${provCount}</strong> have multi-collection provenance recipes (click to expand)` : ''}
+          </span>
+        </div>
+        <div class="ev-fact-list">${cards}</div>
+      </div>
+    `);
+  }
+
+  // ─── Alert provenance — show the actual pipelines ──────
+  const alerts = evidence.alert_provenance || [];
+  if (alerts.length) {
+    const cards = alerts.map((a, i) => {
+      const pipeJson = (a.detection_pipeline != null)
+        ? (typeof a.detection_pipeline === 'string'
+            ? a.detection_pipeline
+            : JSON.stringify(a.detection_pipeline, null, 2))
+        : '(pipeline not captured)';
+      return `
+        <div class="ev-alert-card${i === 0 ? ' expanded' : ''}" id="evAlert${i}">
+          <div class="ev-alert-head" onclick="toggleEvidenceAlert(${i})">
+            <span class="ev-alert-severity ${a.severity || ''}">${a.severity || '?'}</span>
+            <span class="ev-alert-kind">${escapeHtml(a.kind || '?')}</span>
+            <span class="ev-alert-title">${escapeHtml(a.title || '')}</span>
+            <span class="ev-alert-caret">▸</span>
+          </div>
+          <div class="ev-alert-body">
+            <p>${escapeHtml(a.detection_note || a.summary || '')}</p>
+            <div style="font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:#8b949e;margin-bottom:4px">
+              Detection aggregation against <code style="color:#79c0ff">${escapeHtml(a.detection_collection || 'banking.network_graph')}</code>
+            </div>
+            <pre>${escapeHtml(pipeJson)}</pre>
+          </div>
+        </div>`;
+    }).join('');
+    sections.push(`
+      <div class="evidence-section">
+        <div class="ev-section-head">
+          ⚠️ Alert provenance <span class="ev-count">${alerts.length}</span>
+          <span style="color:var(--text-muted);font-weight:400;text-transform:none;letter-spacing:0;margin-left:8px">
+            — the exact aggregation that flagged each risk pattern
+          </span>
+        </div>
+        ${cards}
+      </div>
+    `);
+  }
+
+  $('evidenceContent').innerHTML = sections.join('');
+}
+
+function toggleEvidenceAlert(i) {
+  const c = $('evAlert' + i);
+  if (c) c.classList.toggle('expanded');
+}
+
+/**
+ * Render one field-fact card. If the fact has a `provenance` recipe, render an
+ * expandable section underneath that shows the production data flow plus the
+ * real cross-collection corroborating queries the agent ran live.
+ */
+function buildFactCard(f, i) {
+  const hasProv = !!f.provenance;
+  const matched = hasProv ? (f.provenance.checks || []).filter(c => c.signal_matched).length : 0;
+  const total = hasProv ? (f.provenance.checks || []).length : 0;
+  const toggleCls = !hasProv ? '' : (matched > 0 ? 'matched' : 'unmatched');
+  const toggleHtml = hasProv
+    ? `<button class="ev-prov-toggle ${toggleCls}" onclick="toggleFactCard(${i})">
+         <span>📋 ${matched}/${total} signals</span>
+         <span class="ev-caret">▸</span>
+       </button>`
+    : `<span style="font-size:10px;color:var(--text-muted);font-style:italic">direct read</span>`;
+
+  return `
+    <div class="ev-fact-card" id="evFact${i}">
+      <div class="ev-fact-head">
+        <div class="ev-claim">${escapeHtml(f.claim)}</div>
+        <div class="ev-source">${escapeHtml(f.source_path)}</div>
+        <div class="ev-value">${escapeHtml(JSON.stringify(f.value))}</div>
+        ${toggleHtml}
+      </div>
+      ${hasProv ? `<div class="ev-prov-body">${renderProvenance(f.provenance, i)}</div>` : ''}
+    </div>
+  `;
+}
+
+function renderProvenance(p, factIdx) {
+  const checksHtml = (p.checks || []).map((c, ci) => {
+    const matchedCls = c.signal_matched ? 'matched' : 'unmatched';
+    const matchIcon = c.signal_matched ? '✓' : '·';
+    const pipelineBlock = c.pipeline != null
+      ? (typeof c.pipeline === 'string'
+          ? `<pre>${escapeHtml(c.pipeline)}</pre>`
+          : `<pre>${escapeHtml(JSON.stringify(c.pipeline, null, 2))}</pre>`)
+      : '';
+    const queryBlock = c.query ? `<pre>${escapeHtml(JSON.stringify({find: c.query, projection: c.projection || {}}, null, 2))}</pre>` : '';
+    const resultsBlock = (c.results && c.results.length)
+      ? `<div class="ev-prov-check-sublabel">Live result${c.results.length === 1 ? '' : 's'} (${c.result_count} total)</div>
+         <pre>${escapeHtml(JSON.stringify(c.results, null, 2))}</pre>`
+      : `<div class="ev-prov-check-sublabel">Live result</div>
+         <pre style="color:#6b7280">(0 documents matched — this signal did not fire for the live data)</pre>`;
+    return `
+      <div class="ev-prov-check${ci === 0 ? ' expanded' : ''}" id="evCheck${factIdx}_${ci}">
+        <div class="ev-prov-check-head" onclick="toggleProvCheck(${factIdx}, ${ci})">
+          <span class="ev-prov-check-badge ${matchedCls}">${matchIcon}</span>
+          <span class="ev-prov-check-title">${escapeHtml(c.title || c.operation || 'query')}</span>
+          <span class="ev-prov-check-meta">${c.result_count ?? 0} doc${(c.result_count ?? 0) === 1 ? '' : 's'} • ${c.execution_ms ?? 0}ms</span>
+          <span class="ev-prov-check-caret">▸</span>
+        </div>
+        <div class="ev-prov-check-body">
+          ${c.why_this_matters ? `<p class="why">${escapeHtml(c.why_this_matters)}</p>` : ''}
+          <div class="ev-prov-check-sublabel">${escapeHtml(c.operation || 'aggregate')} on <code style="color:#79c0ff">${escapeHtml(c.collection || '?')}</code></div>
+          ${pipelineBlock}${queryBlock}
+          ${resultsBlock}
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  return `
+    <div class="ev-prov-section">
+      <div class="ev-prov-label">📘 How is this flag set in production?</div>
+      <div class="ev-prov-flow">${escapeHtml(p.production_data_flow || '')}</div>
+    </div>
+    <div class="ev-prov-section">
+      <div class="ev-prov-label">🔍 Re-derived live from underlying data</div>
+      <div class="ev-prov-note">${escapeHtml(p.demo_note || '')}</div>
+      ${checksHtml}
+    </div>
+    <div class="ev-prov-summary">${escapeHtml(p.verification_summary || '')}</div>
+  `;
+}
+
+function toggleFactCard(i) {
+  const c = $('evFact' + i);
+  if (c) c.classList.toggle('expanded');
+}
+
+function toggleProvCheck(factIdx, checkIdx) {
+  const c = $('evCheck' + factIdx + '_' + checkIdx);
+  if (c) c.classList.toggle('expanded');
+}
+
+
+
+async function sendGraphChat() {
+  const input = $('graphChatInput');
+  const query = input.value.trim();
+  if (!query) return;
+  const btn = $('graphChatBtn');
+  const sp = $('graphChatSpinner');
+  btn.disabled = true; sp.classList.remove('hidden');
+
+  appendChat('user', escapeHtml(query));
+  input.value = '';
+  showTyping();
+
+  try {
+    const r = await fetch('/api/graph/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ query, history: graphState.chatHistory }),
+    });
+    const d = await r.json();
+    hideTyping();
+
+    if (!r.ok) {
+      appendChat('error', '⚠ ' + escapeHtml(d.detail || 'Chat failed'));
+      return;
+    }
+
+    // Save turn for history
+    graphState.chatHistory.push({ role: 'user', content: query });
+    graphState.chatHistory.push({ role: 'assistant', content: d.message || '' });
+
+    // Build assistant bubble with reasoning + action footer
+    let metaParts = [];
+    if (d.action?.type === 'explore_entity' && d.action?.entity_id) {
+      metaParts.push(`<strong>$graphLookup</strong> on <code>${d.action.entity_id}</code> @ depth ${d.action.depth || 2}`);
+    } else if (d.action?.type === 'none') {
+      metaParts.push('<em>no graph traversal needed for this question</em>');
+    }
+    if (d.reasoning) metaParts.push(`<em>${escapeHtml(d.reasoning)}</em>`);
+    metaParts.push(`<span style="color:var(--accent);font-weight:700">${d.query_time_ms} ms</span>`);
+
+    appendChat('assistant', escapeHtml(d.message || '(no response)'), metaParts.join(' • '));
+
+    // Update graph if action returned data
+    if ((d.nodes || []).length > 0) {
+      graphState.highlightOverride = new Set(d.highlight_nodes || []);
+      renderGraph(d.nodes, d.edges);
+      showGraphPipeline(d.pipeline_used);
+      const label = d.root_label || d.root || '';
+      showGraphInfo(
+        `Chat-driven traversal: ${d.nodes.length} nodes, ${d.edges.length} edges` +
+        (label ? ` • root: ${label}` : ''),
+        d.query_time_ms,
+      );
+      showGraphNarrative(null);
+    } else if ((d.highlight_nodes || []).length > 0) {
+      // Just highlight on the existing graph without reloading
+      graphState.highlightOverride = new Set(d.highlight_nodes);
+      if (graphState.network) {
+        const ids = graphState.network.body.data.nodes.getIds();
+        const updates = ids.filter(id => d.highlight_nodes.includes(id))
+          .map(id => ({ id, borderWidth: 4, color: { border: '#dc2626' } }));
+        if (updates.length) graphState.network.body.data.nodes.update(updates);
+      }
+    }
+  } catch (e) {
+    hideTyping();
+    appendChat('error', '⚠ ' + escapeHtml(e.message));
+  } finally {
+    btn.disabled = false; sp.classList.add('hidden');
+  }
+}
+
+function searchGraphEntity() {
+  clearTimeout(graphState.searchTimer);
+  const q = $('graphSearchInput').value.trim();
+  const box = $('graphSearchResults');
+  if (q.length < 1) { box.classList.add('hidden'); return; }
+  graphState.searchTimer = setTimeout(async () => {
+    try {
+      const r = await fetch('/api/graph/search?q=' + encodeURIComponent(q) + '&limit=15');
+      const d = await r.json();
+      if (!d.results || d.results.length === 0) {
+        box.classList.add('hidden'); return;
+      }
+      box.innerHTML = d.results.map(rec => `
+        <div class="entity-search-result" onclick="pickEntity('${rec.id.replace(/'/g, "\\'")}')">
+          <span><strong>${rec.label}</strong> <span style="color:var(--text-muted);font-size:11px">(${rec.id})</span></span>
+          <span class="esr-type">${rec.type}</span>
+        </div>
+      `).join('');
+      box.classList.remove('hidden');
+    } catch (e) { console.error(e); }
+  }, 200);
+}
+
+function pickEntity(id) {
+  $('graphSearchInput').value = id;
+  $('graphSearchResults').classList.add('hidden');
+  loadEntityGraph(id);
+}
+
+document.addEventListener('click', e => {
+  if (!e.target.closest('#graphSearchInput') && !e.target.closest('#graphSearchResults')) {
+    const box = $('graphSearchResults');
+    if (box) box.classList.add('hidden');
+  }
+});
+
+/* ═══════════════════════════════════════════════════════
+   DOCUMENT ONBOARDING — own tab, with Atlas Activity Monitor
+   ═══════════════════════════════════════════════════════ */
+function onOnboardFile(inputEl) {
+  const f = inputEl.files?.[0];
+  const dz = $('onboardDropZone');
+  if (!f) {
+    $('onboardFileLabel').textContent = 'Click to choose a PDF, PNG or JPG';
+    $('onboardBtn').disabled = true;
+    if (dz) dz.classList.remove('has-file');
+    return;
+  }
+  $('onboardFileLabel').textContent = `✓ ${f.name}  ·  ${Math.round(f.size/1024)} KB`;
+  $('onboardBtn').disabled = false;
+  if (dz) dz.classList.add('has-file');
+  // Swap icon to checkmark
+  dz.querySelector('.ud-icon').textContent = '📎';
+}
+
+async function extractAndMap() {
+  const btn = $('onboardBtn'); const sp = $('onboardSpinner');
+  const file = $('onboardFile').files?.[0];
+  if (!file) { alert('Please choose a document first.'); return; }
+
+  btn.disabled = true; sp.classList.remove('hidden');
+  $('onboardResult').classList.remove('empty');
+  $('onboardResult').innerHTML = '<div class="loading-row"><span class="spinner"></span> Sending to Claude for entity extraction ...</div>';
+
+  try {
+    const fd = new FormData();
+    fd.append('file', file);
+    const r = await fetch('/api/graph/extract-pdf?commit=true', { method: 'POST', body: fd });
+    const d = await r.json();
+    if (!r.ok || d.error) {
+      $('onboardResult').innerHTML = `<div class="extraction-alert">⚠ ${escapeHtml(d.detail || d.error || 'Extraction failed')}</div>`;
+      return;
+    }
+    renderExtraction(d);
+
+    // Update graph: re-load overview so the new node is included AND highlighted
+    if (d.committed) {
+      graphState.highlightOverride = new Set(d.highlight_nodes || []);
+      if (d.nodes && d.nodes.length) {
+        renderGraph(d.nodes, d.edges);
+        const isPolicy = d.document_type === 'insurance_policy' || d.new_policy_id;
+        const focalLabel = isPolicy
+          ? `${d.policy?.policy_type || 'insurance'} policy ${d.new_policy_id}`
+          : (d.proposed_nodes?.[0]?.label || d.new_customer_id);
+        showGraphNarrative(
+          d.risk_alerts.length
+            ? `<strong>⚠ AUTO-FLAGGED:</strong> ${d.risk_alerts.map(a => a.message).join(' &nbsp;·&nbsp; ')}`
+            : `${isPolicy ? 'New policy registered' : 'New customer onboarded'}: <strong>${escapeHtml(focalLabel)}</strong> — no fraud-ring matches.`
+        );
+        const focalId = d.new_policy_id || d.new_customer_id;
+        showGraphInfo(
+          `${isPolicy ? 'Registered' : 'Onboarded'} ${focalId} • ${d.matches.length} matches against existing graph • ${d.risk_alerts.length} alerts triggered`,
+          d.query_time_ms,
+        );
+      }
+    }
+  } catch (e) {
+    console.error(e);
+    $('onboardResult').innerHTML = `<div class="extraction-alert">⚠ ${escapeHtml(e.message)}</div>`;
+  } finally {
+    btn.disabled = false; sp.classList.add('hidden');
+  }
+}
+
+function renderExtraction(d) {
+  const e = d.extraction || {};
+  const matches = d.matches || [];
+  const alerts = d.risk_alerts || [];
+  const matchByExtracted = (kind, val) => matches.find(m => m.kind === kind && m.extracted === val);
+  const matchByName = (kind, name) => matches.find(m => m.kind === kind && _normCmp(m.extracted, name));
+  const docType = (d.document_type || e.document_type || 'kyc_form').toLowerCase();
+  const isPolicy = docType === 'insurance_policy' || !!d.new_policy_id;
+
+  const docTypeLabels = {
+    national_id:      { label: '🪪 National ID Card',      color: '#0d47a1' },
+    passport:         { label: '🛂 Passport',              color: '#7b1fa2' },
+    drivers_license:  { label: '🚗 Driver\'s License',     color: '#0d47a1' },
+    insurance_policy: { label: '📑 Insurance Policy',      color: '#00897b' },
+    kyc_form:         { label: '📝 KYC Form',              color: '#1a237e' },
+    bank_statement:   { label: '🏦 Bank Statement',        color: '#1a237e' },
+    other:            { label: '📄 Document',              color: '#64748b' },
+  };
+  const dtl = docTypeLabels[docType] || docTypeLabels.other;
+
+  let html = '';
+
+  // ── Doc-type badge ──
+  html += `<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap">
+    <span style="display:inline-block;padding:4px 10px;border-radius:14px;background:${dtl.color};color:#fff;font-size:11px;font-weight:700;letter-spacing:.3px">${dtl.label}</span>
+    ${e.summary ? `<span style="font-size:11px;color:var(--text-muted);font-style:italic">${escapeHtml(e.summary)}</span>` : ''}
+  </div>`;
+
+
+
+  // ── Scoring legend (collapsed by default) ──
+  html += `<details class="scoring-legend">
+    <summary>How are these matches scored?</summary>
+    <div class="legend-grid">
+      <span class="er-status new">NEW</span>
+      <span>The attribute hasn't been seen in the bank's records before — a fresh node is inserted.</span>
+      <span class="er-status fraud_signal">FRAUD SIGNAL</span>
+      <span>Matched a known shared identifier flagged in the seed data (≥2 customers already linked). Triggers a risk alert.</span>
+      <span class="er-status emerging">EMERGING</span>
+      <span>Matched an attribute first seen during a previous upload in this session, OR a legitimate large employer. Informational only.</span>
+      <span class="er-status identity">LINKED</span>
+      <span>The attribute matches a single legitimate record (e.g. existing customer name). Just connecting nodes, no signal.</span>
+      <span class="er-status watchlist">WATCHLIST</span>
+      <span>The matched person is currently on the AML / fraud watchlist.</span>
+    </div>
+  </details>`;
+
+  // ── Top: alert banner ──
+  if (alerts.length) {
+    html += alerts.map(a => `<div class="extraction-alert"><strong>${escapeHtml(a.kind.replaceAll('_',' '))}</strong> &nbsp; ${escapeHtml(a.message)}</div>`).join('');
+  } else if (d.committed) {
+    const focalId = d.new_policy_id || d.new_customer_id;
+    html += `<div style="padding:10px 12px;background:#dcfce7;border-radius:6px;font-size:12px;color:#166534;margin-bottom:8px;line-height:1.5">
+      <strong>✓ ${isPolicy ? 'Registered' : 'Onboarded'} as ${escapeHtml(focalId)}</strong> &mdash;
+      no fraud-ring matches. The new node has been inserted into <code>banking.network_graph</code> with the relationships shown below.
+    </div>`;
+  }
+
+  // ── INSURANCE POLICY ROWS ──
+  if (isPolicy) {
+    const pol = e.policy || {};
+    if (pol.policy_id) {
+      html += entityRow('POLICY ID',
+        pol.policy_id + (pol.underwriter ? ' · ' + pol.underwriter : ''),
+        '→ ' + (d.new_policy_id || ''), 'new',
+        'New policy node added to the graph.');
+    }
+    if (pol.policy_type || pol.coverage_usd) {
+      const cov = pol.coverage_usd ? '$' + Number(pol.coverage_usd).toLocaleString() : '';
+      html += entityRow('COVERAGE', `${(pol.policy_type || '').toUpperCase()} ${cov}`,
+        'EXTRACTED', 'identity',
+        'Read from the policy document by Claude.');
+    }
+    if (pol.holder_name) {
+      const m = matchByName('PolicyHolder', pol.holder_name);
+      const mt = m?.match_type || 'new';
+      html += entityRow('HOLDER',
+        pol.holder_name,
+        m ? mt.replace('_',' ').toUpperCase() + ' · ' + m.matched_id : 'NEW',
+        mt,
+        m?.reason || 'New customer record will be created and linked as policy holder.',
+        m?.activities);
+    }
+    for (const b of (pol.beneficiaries || [])) {
+      const m = matchByName('Beneficiary', b.name);
+      const mt = m?.match_type || 'new';
+      html += entityRow('BENEFICIARY',
+        b.name + (b.relationship ? ' (' + b.relationship + ')' : ''),
+        m ? mt.replace('_',' ').toUpperCase() + ' · ' + m.matched_id : 'NEW',
+        mt,
+        m?.reason || 'New beneficiary; no prior record in the graph.',
+        m?.activities);
+    }
+  }
+  // ── KYC / ID CARD / PASSPORT ROWS ──
+  else {
+    if (e.person?.name) {
+      const idn = e.person.id_number ? ' · ' + e.person.id_number : '';
+      const dob = e.person.dob ? ' · DOB ' + e.person.dob : '';
+      const nat = e.person.nationality ? ' · ' + e.person.nationality : '';
+      html += entityRow('PERSON', e.person.name + idn + dob + nat,
+        '→ ' + d.new_customer_id, 'new',
+        'New customer record created from the extracted identity.');
+    }
+    for (const a of (e.addresses || [])) {
+      const m = matchByExtracted('Address', a.text);
+      const mt = m?.match_type || 'new';
+      const status = m ? mt.replace('_',' ').toUpperCase() : 'NEW';
+      html += entityRow('ADDRESS', a.text, status, mt,
+        m?.reason || 'Address not seen before; a new Address node is inserted and linked.',
+        m?.activities);
+    }
+    for (const p of (e.phones || [])) {
+      const m = matchByExtracted('Phone', p.number);
+      const mt = m?.match_type || 'new';
+      const status = m ? mt.replace('_',' ').toUpperCase() : 'NEW';
+      html += entityRow('PHONE', p.number, status, mt,
+        m?.reason || 'Phone number not seen before.',
+        m?.activities);
+    }
+    for (const emp of (e.employers || [])) {
+      const m = matchByExtracted('Employer', emp.name);
+      const mt = m?.match_type || 'new';
+      const status = m ? mt.replace('_',' ').toUpperCase() : 'NEW';
+      html += entityRow('EMPLOYER', emp.name + (emp.role ? ' — ' + emp.role : ''),
+        status, mt,
+        m?.reason || 'Employer not seen before.',
+        m?.activities);
+    }
+  }
+
+  // ── Footer stats ──
+  html += `<div style="margin-top:12px;padding-top:10px;border-top:1px solid var(--border);font-size:11px;color:var(--text-muted);line-height:1.6">
+    <strong>${d.inserted_node_ids?.length || 0}</strong> new nodes inserted ·
+    <strong>${(d.proposed_edges || []).length}</strong> edges added ·
+    <strong>${d.query_time_ms} ms</strong> end-to-end &nbsp;
+    <span style="color:#64748b">Each upload appends to the graph; use <strong>↺ Reset auto-extracted</strong> to clear all nodes added during this session.</span>
+  </div>`;
+
+  $('onboardResult').innerHTML = html || '<div>(empty extraction)</div>';
+}
+
+function entityRow(key, value, statusText, statusClass, reasonText, activities) {
+  return `<div class="entity-row ${statusClass}">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;width:100%">
+      <div class="er-label">
+        <span class="er-key">${escapeHtml(key)}</span>
+        <span class="er-val">${escapeHtml(value)}</span>
+        ${reasonText ? `<span class="er-reason">${escapeHtml(reasonText)}</span>` : ''}
+      </div>
+      <span class="er-status ${statusClass}">${escapeHtml(statusText)}</span>
+    </div>
+    ${activities && activities.length ? renderActivityMonitor(activities) : ''}
+  </div>`;
+}
+
+function renderActivityMonitor(activities) {
+  if (!activities || !activities.length) return '';
+  const totalMs = activities.reduce((s, a) => s + (a.execution_ms || 0), 0);
+  return `<details class="activity-monitor">
+    <summary>
+      <span>📊 Atlas Activity Monitor — ${activities.length} ${activities.length === 1 ? 'query' : 'queries'} executed</span>
+      <span class="am-meta"><span class="am-time-badge">${totalMs.toFixed(1)} ms total</span></span>
+    </summary>
+    ${activities.map((a, i) => renderActivityStep(a, i + 1)).join('')}
+  </details>`;
+}
+
+function renderActivityStep(a, num) {
+  const codeBody = a.pipeline ? formatMongoPipeline(a.pipeline, a.collection)
+                              : formatMongoQuery(a.operation || 'find', a.query, a.collection);
+  let resultsHtml = '';
+  if (a.results && a.results.length) {
+    resultsHtml = `<div class="am-results-list">${
+      a.results.slice(0, 5).map(r => `<div class="am-results-row">${formatJsonInline(r)}</div>`).join('')
+    }${a.results.length > 5 ? `<div style="color:#8b949e;padding-top:4px">… and ${a.results.length - 5} more</div>` : ''}</div>`;
+  }
+
+  // ── Index badge: surfaces the actual index that served this query ──
+  const idx = a.index_used;
+  const idx2 = a.secondary_index_used;
+  const nonPk = !!a.is_non_pk_match;
+  let indexHtml = '';
+  if (idx) {
+    indexHtml += `<div class="am-index-badge ${nonPk ? 'non-pk' : ''}">
+      <span class="am-idx-pill">🗝️ ${escapeHtml(idx.kind || 'index')}</span>
+      <code>${escapeHtml(idx.name)}</code>
+      <span class="am-idx-on">matched field <code>${escapeHtml(idx.matched_on_field || '?')}</code></span>
+      ${nonPk ? `<span class="am-idx-callout">NON-PRIMARY-KEY equality lookup</span>` : ''}
+    </div>`;
+    if (idx.complexity_note) {
+      indexHtml += `<div class="am-idx-note">${escapeHtml(idx.complexity_note)}</div>`;
+    }
+  }
+  if (idx2) {
+    indexHtml += `<div class="am-index-badge secondary">
+      <span class="am-idx-pill">🔗 ${escapeHtml(idx2.kind || 'index')}</span>
+      <code>${escapeHtml(idx2.name)}</code>
+      <span class="am-idx-on">used by the $lookup fan-out</span>
+    </div>`;
+    if (idx2.purpose) {
+      indexHtml += `<div class="am-idx-note muted">${escapeHtml(idx2.purpose)}</div>`;
+    }
+  }
+
+  // ── SQL contrast (collapsible) ──
+  let sqlHtml = '';
+  if (a.sql_contrast) {
+    const c = a.sql_contrast;
+    sqlHtml = `<details class="am-sql-compare">
+      <summary>🐘 Compare with PostgreSQL / SQL Server</summary>
+      <div class="am-sql-body">
+        ${c.would_require ? `<div class="am-sql-req"><strong>Would require:</strong> ${c.would_require.map(x=>`<span>${escapeHtml(x)}</span>`).join(' · ')}</div>` : ''}
+        ${c.example_sql ? `<pre class="am-sql-pre">${escapeHtml(c.example_sql)}</pre>` : ''}
+        ${c.key_difference ? `<div class="am-sql-diff"><strong>Why MongoDB wins here:</strong> ${escapeHtml(c.key_difference)}</div>` : ''}
+      </div>
+    </details>`;
+  }
+
+  return `<div class="am-step${nonPk ? ' non-pk-step' : ''}">
+    <div class="am-step-header">
+      <span class="am-step-title">
+        <span class="am-step-num">${num}</span> ${escapeHtml(a.title || '')}
+        ${nonPk ? '<span class="am-non-pk-tag" title="This match was on a non-primary-key field — the demo highlight">🔑 NON-PK</span>' : ''}
+      </span>
+      <span class="am-meta"><span class="am-time-badge">${(a.execution_ms || 0).toFixed(1)} ms</span></span>
+    </div>
+    ${a.description ? `<div class="am-desc">${escapeHtml(a.description)}</div>` : ''}
+    ${indexHtml}
+    <div class="am-code">${codeBody}</div>
+    <div class="am-results">
+      <span>↳ <strong style="color:#c9d1d9">${a.result_count}</strong> document${a.result_count === 1 ? '' : 's'} returned${a.shared_by_count !== undefined ? ` · <strong style="color:#ff7b72">${a.shared_by_count}</strong> linked customer${a.shared_by_count === 1 ? '' : 's'}` : ''}</span>
+    </div>
+    ${resultsHtml}
+    ${sqlHtml}
+    ${a.best_practice_note ? `<div class="am-best-practice">${escapeHtml(a.best_practice_note)}</div>` : ''}
+  </div>`;
+}
+
+/* ── MongoDB shell-like formatters ────────────────────────────────────── */
+function formatMongoQuery(operation, query, collection) {
+  const collName = (collection || 'banking.network_graph').replace(/^banking\./, '');
+  return `<span class="o">db.${collName}.${operation}</span>(\n${formatJsonValue(query, 2)}\n)`;
+}
+
+function formatMongoPipeline(pipeline, collection) {
+  const collName = (collection || 'banking.network_graph').replace(/^banking\./, '');
+  return `<span class="o">db.${collName}.aggregate</span>([\n${
+    pipeline.map(stage => '  ' + formatJsonValue(stage, 2).trim()).join(',\n')
+  }\n])`;
+}
+
+function formatJsonValue(v, indent = 0) {
+  if (v === null) return '<span class="k">null</span>';
+  if (typeof v === 'boolean') return `<span class="n">${v}</span>`;
+  if (typeof v === 'number') return `<span class="n">${v}</span>`;
+  if (typeof v === 'string') return `<span class="s">"${escapeHtml(v)}"</span>`;
+  if (Array.isArray(v)) {
+    if (v.length === 0) return '[]';
+    const pad = ' '.repeat(indent + 2);
+    const closePad = ' '.repeat(indent);
+    return '[\n' + v.map(x => pad + formatJsonValue(x, indent + 2)).join(',\n') + '\n' + closePad + ']';
+  }
+  if (typeof v === 'object') {
+    const keys = Object.keys(v);
+    if (keys.length === 0) return '{}';
+    const pad = ' '.repeat(indent + 2);
+    const closePad = ' '.repeat(indent);
+    const lines = keys.map(k => {
+      // Mongo operator keys (start with $) are highlighted differently
+      const keyClass = k.startsWith('$') ? 'o' : 'k';
+      return `${pad}<span class="${keyClass}">${escapeHtml(k)}</span>: ${formatJsonValue(v[k], indent + 2)}`;
+    });
+    return '{\n' + lines.join(',\n') + '\n' + closePad + '}';
+  }
+  return escapeHtml(String(v));
+}
+
+function formatJsonInline(obj) {
+  return formatJsonValue(obj, 0).replace(/\n\s*/g, ' ');
+}
+
+function _normCmp(a, b) { return (a || '').trim().toLowerCase() === (b || '').trim().toLowerCase(); }
+
+/* ═══════════════════════════════════════════════════════
+   ARCHITECTURE TAB — interactive 3-column flow + live anatomy
+   ═══════════════════════════════════════════════════════ */
+
+// Pair mapping: every external system → list of MongoDB collections it maps to
+// in this demo. Used for click-to-highlight.
+const ARCH_EXTERNAL = [
+  { id: 'core_banking', name: 'Core Banking System',  icon: '🏦',
+    examples: 'FIS, Temenos T24, Mambu',
+    pairs: ['accounts', 'transactions'], status: 'live',
+    note: 'Customer accounts + transactions stream in via CDC / change events' },
+  { id: 'crm', name: 'CRM',                            icon: '🤝',
+    examples: 'Salesforce, MS Dynamics',
+    pairs: ['customers'], status: 'live',
+    note: 'Master customer record — name, contact, employment, income' },
+  { id: 'kyc',   name: 'KYC / IDV Provider',           icon: '🪪',
+    examples: 'Onfido, Trulioo, Jumio',
+    pairs: ['kyc_documents'], status: 'live',
+    note: 'ID scans, document type, risk flags, embeddings for similarity search' },
+  { id: 'loan_origin', name: 'Loan Origination System', icon: '📋',
+    examples: 'nCino, Encompass, LoanPro',
+    pairs: ['loan_applications', 'loan_support_docs'], status: 'live',
+    note: 'Applications, supporting docs, approval workflow' },
+  { id: 'insurance_admin', name: 'Insurance Policy Admin', icon: '📑',
+    examples: 'Guidewire, Duck Creek',
+    pairs: ['insurance_policies'], status: 'live',
+    note: 'Policies, holders, beneficiaries — feeds the ghost-beneficiary check' },
+  { id: 'document_mgmt', name: 'Document Management (ECM)', icon: '📂',
+    examples: 'OpenText, M-Files, SharePoint',
+    pairs: ['documents'], status: 'live',
+    note: 'Unstructured PDFs — scans, statements, contracts' },
+  { id: 'kb',  name: 'Knowledge Base / Policy Docs',  icon: '📚',
+    examples: 'Confluence, Notion, intranet wikis',
+    pairs: ['faq_chunks'], status: 'live',
+    note: 'Internal policy documents, vectorised for the FAQ chatbot' },
+  { id: 'product_catalog', name: 'Product Catalog',    icon: '🛍️',
+    examples: 'Internal product master',
+    pairs: ['bank_products'], status: 'live',
+    note: 'Banking products — names, descriptions, embeddings for cross-sell' },
+
+  { id: 'sanctions', name: 'OFAC / Sanctions Lists',   icon: '🚫',
+    examples: 'OFAC SDN, UN, EU, FATF',
+    pairs: ['network_graph'], status: 'field',
+    note: 'Currently simulated as metadata.watchlist on network_graph documents. In production this would be a nightly screening batch + real-time delta feed.' },
+  { id: 'tms', name: 'Transaction Monitoring (AML)',   icon: '🛡️',
+    examples: 'Actimize, SAS AML, Oracle FCC',
+    pairs: ['network_graph', 'transactions'], status: 'field',
+    note: 'Currently simulated as metadata.aml_flag + chain_step relationships. In production: rule-based scenarios fire from TMS into a compliance_alerts collection.' },
+
+  { id: 'adverse_media', name: 'Adverse Media Screening', icon: '📰',
+    examples: 'World-Check, Dow Jones, LexisNexis',
+    pairs: [], status: 'none',
+    note: 'Not modelled in this demo. Would land as documents in an adverse_media collection and feed the watchlist consolidator.' },
+  { id: 'clickstream', name: 'Clickstream / Web Events', icon: '🖱️',
+    examples: 'Segment, Snowplow, Kafka',
+    pairs: [], status: 'none',
+    note: 'Not modelled. In production: stream high-volume events via Atlas Stream Processing or Kafka → MongoDB Change Streams for real-time fraud-pattern detection.' },
+];
+
+const ARCH_ATLAS = [
+  { id: 'customers',          name: 'customers',          icon: '👤', note: 'master record' },
+  { id: 'accounts',           name: 'accounts',           icon: '💰', note: 'balances + ownership' },
+  { id: 'transactions',       name: 'transactions',       icon: '🔄', note: 'movement of money' },
+  { id: 'loan_applications',  name: 'loan_applications',  icon: '📋', note: 'application + decision' },
+  { id: 'loan_support_docs',  name: 'loan_support_docs',  icon: '📎', note: 'PDFs attached to loans' },
+  { id: 'insurance_policies', name: 'insurance_policies', icon: '📑', note: 'holders + beneficiaries' },
+  { id: 'kyc_documents',      name: 'kyc_documents',      icon: '🪪', note: 'has description_embedding' },
+  { id: 'documents',          name: 'documents',          icon: '📄', note: 'unstructured PDFs' },
+  { id: 'faq_chunks',         name: 'faq_chunks',         icon: '📚', note: 'has embedding (FAQ RAG)' },
+  { id: 'bank_products',      name: 'bank_products',      icon: '🛍️', note: 'has embedding (cross-sell)' },
+  { id: 'network_graph',      name: 'network_graph',      icon: '🕸️', note: 'unified entity + relationships' },
+];
+
+const ARCH_APP = [
+  { name: 'FastAPI Backend',  icon: '🐍', note: 'Python · pymongo driver · 30+ endpoints' },
+  { name: 'LangGraph Agent',  icon: '🤖', note: '6-node investigator state machine' },
+  { name: 'Amazon Bedrock',   icon: '☁️', note: 'Claude — extraction + narrative + ask-data' },
+  { name: 'Voyage AI',        icon: '🧬', note: 'voyage-4-large · 1024-dim embeddings' },
+  { name: 'Web UI',           icon: '🌐', note: 'this page · vis-network · vanilla JS' },
+];
+
+let archLastHighlight = null;
+
+async function loadArchitecture() {
+  // 1) External column
+  $('archExternalCards').innerHTML = ARCH_EXTERNAL.map(e => {
+    const pairsAttr = e.pairs.join(' ');
+    const statusClass = `ac-status-${e.status}`;
+    const statusLabel = e.status === 'live'  ? '→ collection'
+                      : e.status === 'field' ? '→ simulated as field'
+                      : '◌ not modelled';
+    return `<div class="arch-card ${statusClass}"
+                 data-arch-id="${e.id}"
+                 data-arch-pairs="${pairsAttr}"
+                 onclick="archHighlightFromExternal('${e.id}')"
+                 title="${escapeHtml(e.note)}">
+      <span class="ac-icon">${e.icon}</span>
+      <div class="ac-body">
+        <div class="ac-name">${escapeHtml(e.name)}</div>
+        <div class="ac-meta">${escapeHtml(e.examples)} · ${statusLabel}</div>
+      </div>
+    </div>`;
+  }).join('');
+
+  // 2) Atlas column — fetch live counts
+  let counts = {};
+  try {
+    const r = await fetch('/api/admin/collections');
+    const d = await r.json();
+    counts = d.collections || {};
+    $('archCollCount').textContent = Object.keys(counts).length;
+  } catch (e) {
+    $('archCollCount').textContent = '?';
+  }
+
+  $('archAtlasCards').innerHTML = ARCH_ATLAS.map(c => {
+    const n = counts[c.id] ?? '?';
+    return `<div class="arch-card"
+                 data-arch-coll="${c.id}"
+                 onclick="archHighlightFromCollection('${c.id}')"
+                 title="${escapeHtml(c.note)}">
+      <span class="ac-icon">${c.icon}</span>
+      <div class="ac-body">
+        <div class="ac-name">${c.name}</div>
+        <div class="ac-meta">${escapeHtml(c.note)}</div>
+      </div>
+      <span class="ac-count">${n.toLocaleString ? n.toLocaleString() : n}</span>
+    </div>`;
+  }).join('');
+
+  // 3) App column
+  $('archAppCards').innerHTML = ARCH_APP.map(a => `
+    <div class="arch-card">
+      <span class="ac-icon">${a.icon}</span>
+      <div class="ac-body">
+        <div class="ac-name">${escapeHtml(a.name)}</div>
+        <div class="ac-meta">${escapeHtml(a.note)}</div>
+      </div>
+    </div>
+  `).join('');
+
+  // 4) Initial doc anatomy
+  archLoadSample();
+}
+
+function archHighlightFromExternal(extId) {
+  archClearHighlight();
+  const card = document.querySelector(`[data-arch-id="${extId}"]`);
+  if (!card) return;
+  card.classList.add('arch-highlighted');
+  const pairs = (card.dataset.archPairs || '').split(' ').filter(Boolean);
+  pairs.forEach(p => {
+    const c = document.querySelector(`[data-arch-coll="${p}"]`);
+    if (c) c.classList.add('arch-highlighted');
+  });
+  archLastHighlight = extId;
+}
+
+function archHighlightFromCollection(collId) {
+  archClearHighlight();
+  const c = document.querySelector(`[data-arch-coll="${collId}"]`);
+  if (c) c.classList.add('arch-highlighted');
+  // Highlight every external system that maps to this collection
+  ARCH_EXTERNAL.filter(e => e.pairs.includes(collId)).forEach(e => {
+    const ex = document.querySelector(`[data-arch-id="${e.id}"]`);
+    if (ex) ex.classList.add('arch-highlighted');
+  });
+  archLastHighlight = collId;
+}
+
+function archClearHighlight() {
+  document.querySelectorAll('.arch-highlighted').forEach(el => el.classList.remove('arch-highlighted'));
+  archLastHighlight = null;
+}
+
+async function archLoadSample() {
+  const sel = $('archAnatomyCollection');
+  const col = sel ? sel.value : 'kyc_documents';
+  const resultDiv = $('archAnatomyResult');
+  resultDiv.innerHTML = '<div style="padding:20px;text-align:center;color:var(--text-muted);font-size:12px"><span class="spinner"></span> Fetching one document from <code>banking.' + col + '</code> ...</div>';
+
+  try {
+    const r = await fetch('/api/admin/sample-document?collection=' + encodeURIComponent(col));
+    const d = await r.json();
+    if (!r.ok) {
+      resultDiv.innerHTML = `<div class="extraction-alert">⚠ ${escapeHtml(d.detail || 'Fetch failed')}</div>`;
+      return;
+    }
+
+    // Anatomy stats strip
+    const ana = d.anatomy || {};
+    const embKeys = Object.keys(d.embedding_meta || {});
+    const stats = [
+      { label: 'Collection', value: d.collection },
+      { label: 'Top-level fields', value: ana.top_level_field_count ?? '?' },
+      { label: 'Embedded arrays', value: Object.keys(ana.embedded_array_lengths || {}).length },
+    ];
+    let statsHtml = stats.map(s => `<div class="ana-stat"><span class="ana-label">${escapeHtml(s.label)}</span><span class="ana-value">${escapeHtml(String(s.value))}</span></div>`).join('');
+    if (embKeys.length) {
+      embKeys.forEach(k => {
+        const m = d.embedding_meta[k];
+        statsHtml += `<div class="ana-stat embedding"><span class="ana-label">🧬 ${escapeHtml(k)}</span><span class="ana-value">${m.dims} dims · ${escapeHtml(m.model_field || 'voyage-4-large')}</span></div>`;
+      });
+    }
+
+    // Render the document JSON with embedding lines highlighted
+    const docHtml = renderArchDocument(d.document, embKeys);
+
+    resultDiv.innerHTML = `
+      <div class="arch-anatomy-stats">${statsHtml}</div>
+      ${embKeys.length ? `<p style="font-size:12px;color:#15803d;margin:0 0 10px;line-height:1.55">
+        <strong>🧬 Notice:</strong> the <code>${embKeys.join('</code> / <code>')}</code> field${embKeys.length===1?'':'s'} live on the <strong>same document</strong> as the operational fields below. One <code>findOne()</code> returns operational data + relationships + the 1024-dim vector in a single round-trip. In PostgreSQL this would be a JOIN against a separate <code>${col}_embeddings</code> table or a network call to Pinecone / Weaviate.
+      </p>` : `<p style="font-size:12px;color:var(--text-muted);margin:0 0 10px">This collection doesn't store an embedding inline — but it could. Adding a 1024-dim vector field requires zero migrations or extension installs.</p>`}
+      <div class="arch-doc-display">
+        <div class="arch-doc-header">db.${escapeHtml(col)}.findOne() // 1 document fetched live · ${ana.top_level_field_count || 0} top-level fields</div>
+        <pre class="arch-doc-body">${docHtml}</pre>
+      </div>
+    `;
+  } catch (e) {
+    resultDiv.innerHTML = `<div class="extraction-alert">⚠ ${escapeHtml(e.message)}</div>`;
+  }
+}
+
+/**
+ * Format a sample document as syntax-highlighted JSON, with the embedding
+ * key visually wrapped to draw the eye.
+ */
+function renderArchDocument(doc, embKeys) {
+  const json = JSON.stringify(doc, null, 2);
+  // Per-line render so we can highlight specific keys (the embedding ones)
+  return json.split('\n').map(line => {
+    let html = escapeHtml(line);
+    // Highlight matching embedding key lines
+    for (const k of embKeys) {
+      const re = new RegExp(`("${k}")\\s*:`);
+      if (re.test(line)) {
+        html = `<span class="embedding-hilite"><span class="field-label">${html}</span></span>`;
+        return html;
+      }
+    }
+    // Plain colorization
+    html = html.replace(/("([^"\\]|\\.)*"\s*:)/g, '<span class="field-label">$1</span>');
+    html = html.replace(/:\s*"((?:[^"\\]|\\.)*)"/g, ': <span class="field-string">"$1"</span>');
+    html = html.replace(/:\s*(true|false|null)/g, ': <span class="field-bool">$1</span>');
+    html = html.replace(/:\s*(-?\d+(?:\.\d+)?)/g, ': <span class="field-number">$1</span>');
+    return html;
+  }).join('\n');
+}
+
+async function resetExtractions() {
+  if (!confirm('Remove all auto-extracted nodes (CUST-NEW-*, ADDR-EXTRACT-*, etc.)? This is for resetting the demo.')) return;
+  try {
+    const r = await fetch('/api/graph/reset-extractions', { method: 'POST' });
+    const d = await r.json();
+    alert(`Removed ${d.removed_count} auto-extracted nodes.`);
+    loadGraphOverview();
+  } catch (e) { alert('Reset failed: ' + e.message); }
+}
+
+/* ═══════════════════════════════════════════════════════
+   EDGE INSPECTOR — provenance "Why is this linked?"
+   ═══════════════════════════════════════════════════════ */
+function showEdgeInspector(edgeId) {
+  if (!graphState.network) return;
+  const edge = graphState.network.body.data.edges.get(edgeId);
+  if (!edge) return;
+  // Remove any prior panel
+  document.querySelectorAll('.edge-inspector').forEach(el => el.remove());
+  const panel = document.createElement('div');
+  panel.className = 'edge-inspector';
+  let html = `<button class="ei-close" onclick="this.parentElement.remove()">×</button>
+    <h4>🔗 Why is this linked?</h4>`;
+  html += `<div class="ei-key">From → To</div>
+    <div class="ei-val">${escapeHtml(edge.from)} → ${escapeHtml(edge.to)}</div>`;
+  html += `<div class="ei-key">Relationship</div>
+    <div class="ei-val">${escapeHtml(edge.label || 'unknown')}</div>`;
+  if (edge.source_provenance) {
+    html += `<div class="ei-key">Source</div>
+      <div class="ei-val">${escapeHtml(edge.source_provenance)}</div>`;
+  }
+  if (edge.amount_usd != null) html += `<div class="ei-key">Amount</div><div class="ei-val">$${Number(edge.amount_usd).toLocaleString()}</div>`;
+  if (edge.transaction_count) html += `<div class="ei-key">Transaction count</div><div class="ei-val">${edge.transaction_count}</div>`;
+  if (edge.total_amount_usd != null) html += `<div class="ei-key">Total amount</div><div class="ei-val">$${Number(edge.total_amount_usd).toLocaleString()}</div>`;
+  if (edge.date) html += `<div class="ei-key">Date</div><div class="ei-val">${escapeHtml(edge.date)}</div>`;
+  if (edge.chain_step != null) html += `<div class="ei-key">Chain step</div><div class="ei-val">#${edge.chain_step}</div>`;
+  if (edge.description) html += `<div class="ei-key">Description</div><div class="ei-val">${escapeHtml(edge.description)}</div>`;
+  panel.innerHTML = html;
+  $('graphContainer').appendChild(panel);
 }
 
 /* ═══════════════════════════════════════════════════════

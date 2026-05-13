@@ -1,0 +1,223 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >
+  FSI Digital Bank GenAI demo — Lambda container running FastAPI behind the
+  existing asean_sa_yc HTTP API + S3 static site. The CloudFront
+  distribution at dk1wlzfbn3w8f.cloudfront.net is updated separately by
+  cloudfront_add_behaviors.sh because CloudFormation can't easily mutate
+  an existing distribution it doesn't own.
+
+# ─────────────────────────────────────────────────────────────────────────
+# Parameters
+# ─────────────────────────────────────────────────────────────────────────
+Parameters:
+  ProjectName:
+    Type: String
+    Default: fsi-digital-bank-demo
+    Description: Lowercase, hyphen-separated. Used as a name prefix everywhere.
+
+  PathPrefix:
+    Type: String
+    Default: /fsi_digital_bank_demo
+    Description: CloudFront URL prefix. Mangum strips this before FastAPI sees the request.
+
+  AseanSaYcApiId:
+    Type: String
+    Description: ApiId of the existing asean_sa_yc HTTP API (e.g. abcd1234).
+    AllowedPattern: '^[a-z0-9]{8,12}$'
+
+  EcrImageUri:
+    Type: String
+    Description: >
+      Full image URI in ECR, e.g.
+      979559056307.dkr.ecr.us-east-1.amazonaws.com/fsi-digital-bank-demo:latest
+      Set after `docker push` in deploy.sh.
+
+  MongoDbUri:
+    Type: String
+    NoEcho: true
+    Description: MongoDB Atlas connection string (mongodb+srv://...).
+
+  VoyageApiKey:
+    Type: String
+    NoEcho: true
+    Description: Voyage AI API key (used for embeddings).
+
+  LlmApiUrl:
+    Type: String
+    Description: API Gateway URL for the workshop LLM (Bedrock-fronted Lambda).
+
+  LambdaMemoryMb:
+    Type: Number
+    Default: 1024
+    Description: Lambda memory in MB. 1024 is a reasonable balance for FastAPI + boto3 + pymongo.
+    AllowedValues: [512, 768, 1024, 1536, 2048, 3008]
+
+  LambdaTimeoutSec:
+    Type: Number
+    Default: 29
+    Description: Lambda timeout (must be <= 30s for API Gateway HTTP API).
+    MinValue: 5
+    MaxValue: 29
+
+# ─────────────────────────────────────────────────────────────────────────
+# Resources
+# ─────────────────────────────────────────────────────────────────────────
+Resources:
+
+  # ── S3 bucket for the static site ─────────────────────────────────────
+  StaticBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub '${ProjectName}-static-${AWS::AccountId}-${AWS::Region}'
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      OwnershipControls:
+        Rules:
+          - ObjectOwnership: BucketOwnerEnforced
+      VersioningConfiguration:
+        Status: Suspended
+
+  # CloudFront accesses the bucket via OAC, not via public ACLs.
+  StaticBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref StaticBucket
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Sid: AllowCloudFrontServicePrincipal
+            Effect: Allow
+            Principal:
+              Service: cloudfront.amazonaws.com
+            Action: s3:GetObject
+            Resource: !Sub '${StaticBucket.Arn}/*'
+            # NOTE: this lets ANY CloudFront distribution in the account
+            # read the bucket. Tighten by adding aws:SourceArn condition
+            # once you know the distribution ARN.
+
+  # ── Lambda execution role ─────────────────────────────────────────────
+  LambdaExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub '${ProjectName}-lambda-role'
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: cloudwatch-logs
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource: '*'
+
+  LambdaLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub '/aws/lambda/${ProjectName}-api'
+      RetentionInDays: 14
+
+  # ── The function ─────────────────────────────────────────────────────
+  ApiFunction:
+    Type: AWS::Lambda::Function
+    DependsOn: LambdaLogGroup
+    Properties:
+      FunctionName: !Sub '${ProjectName}-api'
+      PackageType: Image
+      Code:
+        ImageUri: !Ref EcrImageUri
+      Role: !GetAtt LambdaExecutionRole.Arn
+      MemorySize: !Ref LambdaMemoryMb
+      Timeout: !Ref LambdaTimeoutSec
+      Architectures: [x86_64]
+      Environment:
+        Variables:
+          MONGODB_URI: !Ref MongoDbUri
+          VOYAGE_API_KEY: !Ref VoyageApiKey
+          LLM_API_URL: !Ref LlmApiUrl
+          # FastAPI's root_path helps generated OpenAPI URLs resolve right
+          ROOT_PATH: !Ref PathPrefix
+          LOG_LEVEL: INFO
+
+  # Permission for API Gateway to invoke the Lambda.
+  ApiInvokePermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref ApiFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub 'arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${AseanSaYcApiId}/*/*/*'
+
+  # ── API Gateway integration + route on the EXISTING asean_sa_yc API ──
+  ApiIntegration:
+    Type: AWS::ApiGatewayV2::Integration
+    Properties:
+      ApiId: !Ref AseanSaYcApiId
+      IntegrationType: AWS_PROXY
+      IntegrationUri: !GetAtt ApiFunction.Arn
+      IntegrationMethod: POST
+      PayloadFormatVersion: '2.0'
+      TimeoutInMillis: 29000
+
+  # One catch-all route — every method, every path under /fsi_digital_bank_demo/api/*
+  # is proxied to the Lambda. Mangum + FastAPI sort it from there.
+  ApiRoute:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId: !Ref AseanSaYcApiId
+      RouteKey: !Sub 'ANY ${PathPrefix}/api/{proxy+}'
+      Target: !Sub 'integrations/${ApiIntegration}'
+
+  # An extra route for the OpenAPI / docs roots, in case the user hits
+  # /fsi_digital_bank_demo/api directly without a trailing path.
+  ApiRouteRoot:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId: !Ref AseanSaYcApiId
+      RouteKey: !Sub 'ANY ${PathPrefix}/api'
+      Target: !Sub 'integrations/${ApiIntegration}'
+
+# ─────────────────────────────────────────────────────────────────────────
+# Outputs — useful for the deploy.sh / cloudfront_add_behaviors.sh scripts
+# ─────────────────────────────────────────────────────────────────────────
+Outputs:
+  StaticBucketName:
+    Description: S3 bucket holding the built index.html
+    Value: !Ref StaticBucket
+    Export:
+      Name: !Sub '${AWS::StackName}-StaticBucket'
+
+  StaticBucketRegionalDomain:
+    Description: Bucket regional domain to use as a CloudFront origin
+    Value: !GetAtt StaticBucket.RegionalDomainName
+    Export:
+      Name: !Sub '${AWS::StackName}-StaticBucketDomain'
+
+  ApiFunctionName:
+    Description: Lambda function name
+    Value: !Ref ApiFunction
+
+  ApiInvokeUrlExample:
+    Description: One example URL that should hit the Lambda
+    Value: !Sub 'https://${AseanSaYcApiId}.execute-api.${AWS::Region}.amazonaws.com${PathPrefix}/api/customers'
+
+  ApiGatewayOriginDomain:
+    Description: Hostname to use as the dynamic CloudFront origin
+    Value: !Sub '${AseanSaYcApiId}.execute-api.${AWS::Region}.amazonaws.com'
+
+  PathPrefixOut:
+    Description: CloudFront path prefix to use for the new behaviors
+    Value: !Ref PathPrefix

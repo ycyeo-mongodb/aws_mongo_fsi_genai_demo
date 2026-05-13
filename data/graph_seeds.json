@@ -1,0 +1,102 @@
+{
+  "_comment": "Seeded fraud/relationship patterns for the network_graph collection. Designed to produce visually striking $graphLookup demos.",
+
+  "shared_addresses": [
+    {
+      "address_id": "ADDR-PHANTOM-01",
+      "address_text": "42 Riverside Phantom Lane, Phnom Penh",
+      "customers": ["CUST-00012", "CUST-00023", "CUST-00034"],
+      "_pattern": "Synthetic identity ring — three customers registered to the same address within 60 days of each other"
+    },
+    {
+      "address_id": "ADDR-MULE-01",
+      "address_text": "108B Industrial Park Block C, Sihanoukville",
+      "customers": ["CUST-00045", "CUST-00046", "CUST-00047"],
+      "_pattern": "Mule cluster — three customers share a vacant warehouse address"
+    },
+    {
+      "address_id": "ADDR-SHARED-FAMILY",
+      "address_text": "27 Norodom Boulevard #4F, Phnom Penh",
+      "customers": ["CUST-00015", "CUST-00016"],
+      "_pattern": "Likely family — explainable but flagged for review"
+    }
+  ],
+
+  "shared_phones": [
+    {
+      "phone_id": "PHONE-PHM-9999",
+      "phone_text": "+855-12-9999-PHM",
+      "customers": ["CUST-00012", "CUST-00034"],
+      "_pattern": "Reinforces the Phantom Lane synthetic identity ring"
+    },
+    {
+      "phone_id": "PHONE-MULE-X1",
+      "phone_text": "+855-77-FRAUD-X1",
+      "customers": ["CUST-00045", "CUST-00048"],
+      "_pattern": "Mule cluster contact reuse"
+    }
+  ],
+
+  "shared_devices": [
+    {
+      "device_id": "DEV-FRAUD-X9",
+      "device_label": "iPhone fingerprint X9 (rooted)",
+      "customers": ["CUST-00045", "CUST-00046", "CUST-00047", "CUST-00048"],
+      "_pattern": "Same physical device used to log into 4 different bank accounts — strongest mule signal"
+    },
+    {
+      "device_id": "DEV-VPN-CN42",
+      "device_label": "Browser fingerprint CN42 (commercial VPN exit)",
+      "customers": ["CUST-00012", "CUST-00023"],
+      "_pattern": "Two synthetic identities sign in from same VPN endpoint"
+    }
+  ],
+
+  "shared_employers": [
+    {
+      "employer_id": "EMP-AnyCompany",
+      "employer_name": "AnyCompany Industries",
+      "customers": ["CUST-00001", "CUST-00005", "CUST-00010", "CUST-00015"],
+      "_pattern": "Legitimate large employer — useful baseline so visualization isn't only fraud"
+    },
+    {
+      "employer_id": "EMP-PhantomHoldings",
+      "employer_name": "Phantom Holdings Ltd",
+      "customers": ["CUST-00012", "CUST-00023"],
+      "_pattern": "Shell company employer for the Phantom ring"
+    },
+    {
+      "employer_id": "EMP-RoyalCambodia",
+      "employer_name": "Royal Cambodia Trading",
+      "customers": ["CUST-00007", "CUST-00019"],
+      "_pattern": "Suspicious — common employer for the over-insurance customer + ghost beneficiary"
+    }
+  ],
+
+  "aml_chain": [
+    { "from_customer": "CUST-00045", "from_account": "ACC-00045", "to_customer": "CUST-00046", "to_account": "ACC-00046", "amount_usd": 9500.00, "date": "2025-12-01", "description": "Wire — urgent vendor payment" },
+    { "from_customer": "CUST-00046", "from_account": "ACC-00046", "to_customer": "CUST-00047", "to_account": "ACC-00047", "amount_usd": 9300.00, "date": "2025-12-04", "description": "Repayment of personal loan" },
+    { "from_customer": "CUST-00047", "from_account": "ACC-00047", "to_customer": "CUST-00048", "to_account": "ACC-00048", "amount_usd": 9700.00, "date": "2025-12-07", "description": "Service fee — consulting" },
+    { "from_customer": "CUST-00048", "from_account": "ACC-00048", "to_customer": "CUST-00012", "to_account": "ACC-00012", "amount_usd": 9400.00, "date": "2025-12-11", "description": "Property deposit" },
+    { "from_customer": "CUST-00012", "from_account": "ACC-00012", "to_customer": "CUST-00007", "to_account": "ACC-00007", "amount_usd": 9200.00, "date": "2025-12-15", "description": "Final settlement" },
+    { "from_customer": "CUST-00007", "from_account": "ACC-00007", "to_customer": "CUST-00019", "to_account": "ACC-00019", "amount_usd": 9100.00, "date": "2025-12-19", "description": "Insurance premium reimbursement" }
+  ],
+
+  "guarantors": [
+    { "guarantor": "CUST-00007", "loan_id": "LOAN-00001", "_pattern": "concentration risk" },
+    { "guarantor": "CUST-00007", "loan_id": "LOAN-00005", "_pattern": "concentration risk" },
+    { "guarantor": "CUST-00007", "loan_id": "LOAN-00012", "_pattern": "concentration risk" },
+    { "guarantor": "CUST-00007", "loan_id": "LOAN-00018", "_pattern": "concentration risk" },
+    { "guarantor": "CUST-00007", "loan_id": "LOAN-00024", "_pattern": "concentration risk" },
+    { "guarantor": "CUST-00019", "loan_id": "LOAN-00009" },
+    { "guarantor": "CUST-00026", "loan_id": "LOAN-00014" }
+  ],
+
+  "co_applicants": [
+    { "primary_id": "CUST-00012", "co_applicant_id": "CUST-00023", "loan_id": "LOAN-00008" },
+    { "primary_id": "CUST-00045", "co_applicant_id": "CUST-00046", "loan_id": "LOAN-00015" },
+    { "primary_id": "CUST-00015", "co_applicant_id": "CUST-00016", "loan_id": "LOAN-00021" }
+  ],
+
+  "watchlist": ["CUST-00007", "CUST-00012", "CUST-00019", "CUST-00045"]
+}

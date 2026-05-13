@@ -5,3 +5,15 @@ __pycache__/
 .env.*.local
 .venv/
 venv/
+
+# Mac stuff
+.DS_Store
+
+# Build artefacts
+build/
+
+# Deploy-time secrets and backups
+deploy/deploy.env
+deploy/cf-backup-*.json
+deploy/cf-work-*.json
+deploy/s3-policy-tight.json
